@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Ev Kontrol uygulama simgesi: koyu zemin üzerinde turuncu ev çizgisi (arayüzdeki marka işaretiyle aynı dil) -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232933"/>
+      <stop offset="1" stop-color="#15191e"/>
+    </linearGradient>
+  </defs>
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="url(#bg)"/>
+  <rect x="50" y="50" width="924" height="924" rx="206" fill="none" stroke="#343d48" stroke-width="4"/>
+  <!-- Ev: çatı + gövde, kalın çizgi (16 px'te de okunsun) -->
+  <path d="M232 470 L512 238 L792 470 V774 Q792 804 762 804 H262 Q232 804 232 774 Z"
+        fill="none" stroke="#f59e0b" stroke-width="76" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Kapı -->
+  <path d="M432 804 V628 Q432 600 460 600 H564 Q592 600 592 628 V804"
+        fill="none" stroke="#f59e0b" stroke-width="76" stroke-linejoin="round"/>
+</svg>
