@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppVisible } from "../state/desktop";
 import type { HassEntities } from "home-assistant-js-websocket";
+import { locale, t, tk } from "../i18n";
 
 const LABELS: [RegExp, string][] = [
-  [/sabah|fajr|imsak/, "İmsak"],
-  [/gun_dogumu|sunrise/, "Güneş"],
-  [/ogle|dhuhr/, "Öğle"],
-  [/ikindi|asr/, "İkindi"],
-  [/aksam|maghrib/, "Akşam"],
-  [/yatsi|isha/, "Yatsı"],
+  [/sabah|fajr|imsak/, tk("İmsak")],
+  [/gun_dogumu|sunrise/, tk("Güneş")],
+  [/ogle|dhuhr/, tk("Öğle")],
+  [/ikindi|asr/, tk("İkindi")],
+  [/aksam|maghrib/, tk("Akşam")],
+  [/yatsi|isha/, tk("Yatsı")],
 ];
 
 interface Vakit {
@@ -17,13 +18,13 @@ interface Vakit {
 }
 
 function fmtTime(d: Date) {
-  return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 }
 
 function fmtLeft(ms: number) {
   const m = Math.max(0, Math.round(ms / 60000));
   const h = Math.floor(m / 60);
-  return h > 0 ? `${h} sa ${m % 60} dk` : `${m} dk`;
+  return h > 0 ? t("{h} sa {m} dk", { h, m: m % 60 }) : t("{m} dk", { m });
 }
 
 export default function PrayerTimes({ entities }: { entities: HassEntities }) {
@@ -61,15 +62,15 @@ export default function PrayerTimes({ entities }: { entities: HassEntities }) {
 
   return (
     <div className="widget prayer">
-      <div className="widget-title">Namaz Vakitleri</div>
+      <div className="widget-title">{t("Namaz Vakitleri")}</div>
       <div className="prayer-next">
-        <span className="prayer-next-label">{vakitler[nextIdx].label}</span>
-        <span className="prayer-next-left">{fmtLeft(nextTime.getTime() - now.getTime())} kaldı</span>
+        <span className="prayer-next-label">{t(vakitler[nextIdx].label)}</span>
+        <span className="prayer-next-left">{t("{x} kaldı", { x: fmtLeft(nextTime.getTime() - now.getTime()) })}</span>
       </div>
       <ul className="prayer-list">
         {vakitler.map((v, i) => (
           <li key={v.label} className={i === nextIdx ? "next" : v.time < now ? "past" : ""}>
-            <span>{v.label}</span>
+            <span>{t(v.label)}</span>
             <span>{fmtTime(v.time)}</span>
           </li>
         ))}

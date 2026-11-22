@@ -3,6 +3,7 @@ import { useAppVisible } from "../state/desktop";
 import type { Connection, HassEntities } from "home-assistant-js-websocket";
 import { dailyEnergy, fmtKwh, fmtWatts, livePower, monthlyEnergy } from "../ha/energy";
 import Icon from "../ui/Icon";
+import { t } from "../i18n";
 
 interface Props {
   conn: Connection;
@@ -55,23 +56,23 @@ export default function EnergyWidget({ conn, entities, onOpen, connected }: Prop
     };
   }, [conn, energyKey, connected, visible]);
 
-  const show = (v: number | null | undefined) => (v === undefined ? "…" : v === null ? "Veri yok" : fmtKwh(v));
+  const show = (v: number | null | undefined) => (v === undefined ? "…" : v === null ? t("Veri yok") : fmtKwh(v));
 
   return (
-    <button className="widget energy" onClick={onOpen} title="Enerji sayfasını aç">
+    <button className="widget energy" onClick={onOpen} title={t("Enerji sayfasını aç")}>
       <div className="widget-title">
-        <Icon name="energy" size={13} /> Enerji
+        <Icon name="energy" size={13} /> {t("Enerji")}
       </div>
       <div className="energy-row">
-        <span className="muted">Anlık</span>
-        <span className="energy-big">{live.items.length ? fmtWatts(live.total) : "Veri yok"}</span>
+        <span className="muted">{t("Anlık")}</span>
+        <span className="energy-big">{live.items.length ? fmtWatts(live.total) : t("Veri yok")}</span>
       </div>
       <div className="energy-row">
-        <span className="muted">Bugün</span>
+        <span className="muted">{t("Bugün")}</span>
         <span>{show(today)}</span>
       </div>
       <div className="energy-row">
-        <span className="muted">Bu ay</span>
+        <span className="muted">{t("Bu ay")}</span>
         <span>{show(month)}</span>
       </div>
     </button>

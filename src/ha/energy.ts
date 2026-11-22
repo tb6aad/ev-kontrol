@@ -1,4 +1,5 @@
 import type { Connection, HassEntities, HassEntity } from "home-assistant-js-websocket";
+import { locale, tk } from "../i18n";
 
 export interface PowerItem {
   entity: HassEntity;
@@ -126,10 +127,10 @@ export async function dailyEnergy(conn: Connection, entities: HassEntities) {
 export type RangeKey = "1h" | "24h" | "7d" | "30d";
 
 export const RANGES: Record<RangeKey, { label: string; ms: number; period: "5minute" | "hour" | "day"; bucketMs: number }> = {
-  "1h": { label: "Son 1 saat", ms: 3600_000, period: "5minute", bucketMs: 5 * 60_000 },
-  "24h": { label: "Son 24 saat", ms: 24 * 3600_000, period: "hour", bucketMs: 3600_000 },
-  "7d": { label: "Son 7 gün", ms: 7 * 86400_000, period: "day", bucketMs: 86400_000 },
-  "30d": { label: "Son 30 gün", ms: 30 * 86400_000, period: "day", bucketMs: 86400_000 },
+  "1h": { label: tk("Son 1 saat"), ms: 3600_000, period: "5minute", bucketMs: 5 * 60_000 },
+  "24h": { label: tk("Son 24 saat"), ms: 24 * 3600_000, period: "hour", bucketMs: 3600_000 },
+  "7d": { label: tk("Son 7 gün"), ms: 7 * 86400_000, period: "day", bucketMs: 86400_000 },
+  "30d": { label: tk("Son 30 gün"), ms: 30 * 86400_000, period: "day", bucketMs: 86400_000 },
 };
 
 export interface Bucket {
@@ -207,10 +208,10 @@ export async function energySeries(conn: Connection, statIds: string[], range: R
 }
 
 export function fmtWatts(w: number) {
-  if (w >= 1000) return `${(w / 1000).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} kW`;
-  return `${w.toLocaleString("tr-TR", { maximumFractionDigits: w < 10 ? 1 : 0 })} W`;
+  if (w >= 1000) return `${(w / 1000).toLocaleString(locale(), { maximumFractionDigits: 2 })} kW`;
+  return `${w.toLocaleString(locale(), { maximumFractionDigits: w < 10 ? 1 : 0 })} W`;
 }
 
 export function fmtKwh(k: number) {
-  return `${k.toLocaleString("tr-TR", { maximumFractionDigits: k < 10 ? 2 : 1 })} kWh`;
+  return `${k.toLocaleString(locale(), { maximumFractionDigits: k < 10 ? 2 : 1 })} kWh`;
 }

@@ -1,6 +1,7 @@
 // Masaüstü davranışı: pencere görünürlüğü, tepsi, genel kısayol, Windows ile başlatma.
 import { useEffect, useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { t } from "../i18n";
 
 /* ---------- Görünürlük ----------
  * Pencere tepsiye gizlenince Rust tarafı WebView2'yi görünmez yapar ve sayfa
@@ -73,12 +74,25 @@ export async function setAutostart(enabled: boolean) {
 }
 
 /** Tercihleri açılışta ve her değişimde Rust'a ilet. Kısayol alınamazsa onError çağrılır. */
-export function useDesktopSync(closeToTray: boolean, hotkey: string, onError: (msg: string) => void) {
+export function useDesktopSync(closeToTray: boolean, hotkey: string, lang: string, onError: (msg: string) => void) {
+  useEffect(() => {
+    if (isTauri()) invoke("set_tray_labels", { show: t("Ev Kontrol'ü aç"), quit: t("Çıkış") }).catch(() => {});
+  }, [lang]);
   useEffect(() => {
     applyCloseToTray(closeToTray).catch(() => {});
   }, [closeToTray]);
   useEffect(() => {
-    applyHotkey(hotkey || null).catch((e) => onError(String(e)));
+    applyHotkey(hotkey || null).catch((e) => {
+      // Rust hata metni Türkçe; bilinenleri çevir
+      const s = String(e);
+      onError(
+        s.startsWith("Geçersiz kısayol")
+          ? t("Geçersiz kısayol.")
+          : s.startsWith("Kısayol alınamadı")
+            ? t("Kısayol alınamadı; başka bir uygulama kullanıyor olabilir.")
+            : s,
+      );
+    });
     // onError kararlı olmayabilir; yalnızca kısayol değişince yeniden kaydet
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotkey]);

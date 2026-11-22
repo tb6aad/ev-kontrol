@@ -5,16 +5,17 @@ import {
   Bucket, RANGES, RangeKey, dailyEnergy, energySeries, energyStatIds, fmtKwh, fmtWatts, livePower, monthlyEnergy,
 } from "../ha/energy";
 import Icon from "../ui/Icon";
+import { locale, t } from "../i18n";
 
 const RANGE_KEYS: RangeKey[] = ["1h", "24h", "7d", "30d"];
 
 function bucketLabel(t: number, range: RangeKey, long = false) {
   const d = new Date(t);
   if (range === "1h" || range === "24h") {
-    const hm = d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-    return long ? `${d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })} ${hm}` : hm;
+    const hm = d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
+    return long ? `${d.toLocaleDateString(locale(), { day: "numeric", month: "short" })} ${hm}` : hm;
   }
-  return d.toLocaleDateString("tr-TR", long ? { weekday: "short", day: "numeric", month: "long" } : { day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale(), long ? { weekday: "short", day: "numeric", month: "long" } : { day: "numeric", month: "short" });
 }
 
 /* ---------- Çubuk grafik (tek seri: toplam kWh) ---------- */
@@ -52,7 +53,7 @@ function BarChart({ buckets, range, names }: { buckets: Bucket[]; range: RangeKe
   const ticks = Array.from({ length: Math.round(niceMax / tickStep) + 1 }, (_, i) => i * tickStep);
   const labelEvery = Math.ceil(buckets.length / Math.max(2, Math.floor(plotW / 64)));
   const decimals = Math.max(0, -Math.floor(Math.log10(tickStep) + 1e-9));
-  const fmtTick = (v: number) => v.toLocaleString("tr-TR", { maximumFractionDigits: decimals, minimumFractionDigits: 0 });
+  const fmtTick = (v: number) => v.toLocaleString(locale(), { maximumFractionDigits: decimals, minimumFractionDigits: 0 });
 
   const hb = hover != null ? buckets[hover] : null;
   const top = hb
@@ -61,7 +62,7 @@ function BarChart({ buckets, range, names }: { buckets: Bucket[]; range: RangeKe
 
   return (
     <div className="chart" ref={wrap} onMouseLeave={() => setHover(null)}>
-      <svg width={w} height={H} role="img" aria-label={`${RANGES[range].label} enerji tüketimi, kWh`}>
+      <svg width={w} height={H} role="img" aria-label={t("{range} enerji tüketimi, kWh", { range: t(RANGES[range].label) })}>
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} className="grid-line" />
@@ -110,7 +111,7 @@ function BarChart({ buckets, range, names }: { buckets: Bucket[]; range: RangeKe
           style={{ left: Math.min(w - 190, Math.max(0, pad.l + slot * hover + slot / 2 - 90)) }}
         >
           <b>{bucketLabel(hb.start, range, true)}</b>
-          <span className="tip-val">{hb.kwh == null ? "Veri yok" : fmtKwh(hb.kwh)}</span>
+          <span className="tip-val">{hb.kwh == null ? t("Veri yok") : fmtKwh(hb.kwh)}</span>
           {top.map(([id, v]) => (
             <span key={id} className="tip-row">
               <span>{names(id)}</span>
@@ -207,64 +208,64 @@ export default function EnergyPage() {
   const maxK = Math.max(0.001, ...perDevice.map((r) => r.kwh ?? 0));
   const stale = status !== "connected";
 
-  const kv = (v: number | null | undefined) => (v === undefined ? "…" : v === null ? "Veri yok" : fmtKwh(v));
+  const kv = (v: number | null | undefined) => (v === undefined ? "…" : v === null ? t("Veri yok") : fmtKwh(v));
 
   return (
     <div className="page">
       <div className="kpi-row three">
         <div className={`kpi ${stale ? "stale" : ""}`}>
-          <div className="kpi-head"><span className="kpi-icon"><Icon name="energy" size={16} /></span><span className="kpi-label">Anlık güç</span></div>
-          <span className="kpi-value">{live.items.length ? fmtWatts(live.total) : "Veri yok"}</span>
-          <span className="kpi-sub">{live.items.length} güç sensörünün toplamı (W)</span>
+          <div className="kpi-head"><span className="kpi-icon"><Icon name="energy" size={16} /></span><span className="kpi-label">{t("Anlık güç")}</span></div>
+          <span className="kpi-value">{live.items.length ? fmtWatts(live.total) : t("Veri yok")}</span>
+          <span className="kpi-sub">{t("{n} güç sensörünün toplamı (W)", { n: live.items.length })}</span>
         </div>
         <div className={`kpi ${stale ? "stale" : ""}`}>
-          <div className="kpi-head"><span className="kpi-icon"><Icon name="chart" size={16} /></span><span className="kpi-label">Bugün</span></div>
+          <div className="kpi-head"><span className="kpi-icon"><Icon name="chart" size={16} /></span><span className="kpi-label">{t("Bugün")}</span></div>
           <span className="kpi-value">{daily ? kv(daily.today) : "…"}</span>
-          <span className="kpi-sub">{daily?.yesterday != null ? `Dün toplam ${fmtKwh(daily.yesterday)}` : "Dün için veri yok"}</span>
+          <span className="kpi-sub">{daily?.yesterday != null ? t("Dün toplam {x}", { x: fmtKwh(daily.yesterday) }) : t("Dün için veri yok")}</span>
         </div>
         <div className={`kpi ${stale ? "stale" : ""}`}>
-          <div className="kpi-head"><span className="kpi-icon"><Icon name="clock" size={16} /></span><span className="kpi-label">Bu ay</span></div>
+          <div className="kpi-head"><span className="kpi-icon"><Icon name="clock" size={16} /></span><span className="kpi-label">{t("Bu ay")}</span></div>
           <span className="kpi-value">{kv(month)}</span>
-          <span className="kpi-sub">{new Date().toLocaleDateString("tr-TR", { month: "long" })} ayı, kWh</span>
+          <span className="kpi-sub">{t("{month} ayı, kWh", { month: new Date().toLocaleDateString(locale(), { month: "long" }) })}</span>
         </div>
       </div>
 
       <section className="panel-card">
         <div className="panel-head">
           <div>
-            <h2>Enerji tüketimi</h2>
+            <h2>{t("Enerji tüketimi")}</h2>
             <span className="section-meta">
-              {RANGES[range].label} · {total != null && buckets ? `toplam ${fmtKwh(total)}` : "yükleniyor…"}
+              {t(RANGES[range].label)} · {total != null && buckets ? t("toplam {x}", { x: fmtKwh(total) }) : t("yükleniyor…")}
               {missing > 0 && buckets && ` · ${missing} dilimde veri yok`}
             </span>
           </div>
           <div className="panel-tools">
-            <div className="seg small" role="tablist" aria-label="Zaman aralığı">
+            <div className="seg small" role="tablist" aria-label={t("Zaman aralığı")}>
               {RANGE_KEYS.map((k) => (
                 <button key={k} role="tab" aria-selected={range === k} className={range === k ? "active" : ""} onClick={() => setRange(k)}>
-                  {k === "1h" ? "1 sa" : k === "24h" ? "24 sa" : k === "7d" ? "7 gün" : "30 gün"}
+                  {k === "1h" ? t("1 sa") : k === "24h" ? t("24 sa") : k === "7d" ? t("7 gün") : t("30 gün")}
                 </button>
               ))}
             </div>
-            <div className="seg small" role="tablist" aria-label="Görünüm">
-              <button className={view === "chart" ? "active" : ""} onClick={() => setView("chart")}>Grafik</button>
-              <button className={view === "table" ? "active" : ""} onClick={() => setView("table")}>Tablo</button>
+            <div className="seg small" role="tablist" aria-label={t("Görünüm")}>
+              <button className={view === "chart" ? "active" : ""} onClick={() => setView("chart")}>{t("Grafik")}</button>
+              <button className={view === "table" ? "active" : ""} onClick={() => setView("table")}>{t("Tablo")}</button>
             </div>
           </div>
         </div>
 
-        {err && <div className="drawer-note warn"><Icon name="alert" size={15} /> Geçmiş veriler alınamadı: {err}</div>}
-        {!statIds && !energyKey && <div className="empty-mini">Enerji (kWh) ölçen sensör yok.</div>}
+        {err && <div className="drawer-note warn"><Icon name="alert" size={15} /> {t("Geçmiş veriler alınamadı: {e}", { e: err })}</div>}
+        {!statIds && !energyKey && <div className="empty-mini">{t("Enerji (kWh) ölçen sensör yok.")}</div>}
         {buckets && view === "chart" && <BarChart buckets={buckets} range={range} names={names} />}
         {buckets && view === "table" && (
           <div className="table-wrap">
             <table className="data-table">
-              <thead><tr><th>Dilim</th><th className="num">Tüketim (kWh)</th></tr></thead>
+              <thead><tr><th>{t("Dilim")}</th><th className="num">{t("Tüketim (kWh)")}</th></tr></thead>
               <tbody>
                 {[...buckets].reverse().map((b) => (
                   <tr key={b.start}>
                     <td>{bucketLabel(b.start, range, true)}</td>
-                    <td className="num">{b.kwh == null ? <span className="muted">veri yok</span> : b.kwh.toLocaleString("tr-TR", { maximumFractionDigits: 3 })}</td>
+                    <td className="num">{b.kwh == null ? <span className="muted">{t("veri yok")}</span> : b.kwh.toLocaleString(locale(), { maximumFractionDigits: 3 })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -273,21 +274,21 @@ export default function EnergyPage() {
         )}
         {!buckets && statIds && !err && <div className="chart-skeleton" />}
         <p className="muted small">
-          Toplam, enerji ölçen prizlerin toplamıdır (evin tamamı değil). Boş dilimler kayıt olmayan zamanları gösterir; sıfır tüketim anlamına gelmez.
+          {t("Toplam, enerji ölçen prizlerin toplamıdır (evin tamamı değil). Boş dilimler kayıt olmayan zamanları gösterir; sıfır tüketim anlamına gelmez.")}
         </p>
       </section>
 
       <section className="panel-card">
         <div className="panel-head">
           <div>
-            <h2>Cihaz bazında</h2>
-            <span className="section-meta">Anlık güç (W) ve {RANGES[range].label.toLocaleLowerCase("tr")} tüketim (kWh)</span>
+            <h2>{t("Cihaz bazında")}</h2>
+            <span className="section-meta">{t("Anlık güç (W) ve {range} tüketim (kWh)", { range: t(RANGES[range].label).toLocaleLowerCase(locale()) })}</span>
           </div>
         </div>
         <div className="table-wrap">
           <table className="data-table">
             <thead>
-              <tr><th>Cihaz</th><th>Anlık güç</th><th className="num">W</th><th>{RANGES[range].label}</th><th className="num">kWh</th></tr>
+              <tr><th>{t("Cihaz")}</th><th>{t("Anlık güç")}</th><th className="num">W</th><th>{t(RANGES[range].label)}</th><th className="num">kWh</th></tr>
             </thead>
             <tbody>
               {perDevice.map((r) => (
@@ -296,7 +297,7 @@ export default function EnergyPage() {
                   <td className="bar-cell">{r.watts != null && <div className="bar"><div style={{ width: `${(r.watts / maxW) * 100}%` }} /></div>}</td>
                   <td className="num">{r.watts != null ? fmtWatts(r.watts) : <span className="muted">—</span>}</td>
                   <td className="bar-cell">{r.kwh != null && <div className="bar"><div style={{ width: `${(r.kwh / maxK) * 100}%` }} /></div>}</td>
-                  <td className="num">{r.kwh != null ? r.kwh.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : <span className="muted">veri yok</span>}</td>
+                  <td className="num">{r.kwh != null ? r.kwh.toLocaleString(locale(), { maximumFractionDigits: 3 }) : <span className="muted">{t("veri yok")}</span>}</td>
                 </tr>
               ))}
             </tbody>

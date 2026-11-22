@@ -10,6 +10,7 @@ import {
 } from "../ha/automations";
 import Toggle from "./Toggle";
 import AutomationEditor from "./AutomationEditor";
+import { locale, t, tk } from "../i18n";
 
 type Editing = { mode: "new" } | { mode: "edit" | "copy"; config: AutomationConfig };
 
@@ -127,23 +128,23 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
     <div className="automations">
       <div className="toolbar">
         <button className="btn-primary" onClick={() => setEditing({ mode: "new" })}>
-          + Yeni otomasyon
+          + {t("Yeni otomasyon")}
         </button>
-        <input className="search" placeholder="Otomasyon ara…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="search" placeholder={t("Otomasyon ara…")} value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="chips">
           <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>
-            Tümü ({items.length})
+            {t("Tümü ({n})", { n: items.length })}
           </button>
           <button className={filter === "on" ? "active" : ""} onClick={() => setFilter("on")}>
-            Açık ({onCount})
+            {t("Açık ({n})", { n: onCount })}
           </button>
           <button className={filter === "off" ? "active" : ""} onClick={() => setFilter("off")}>
-            Kapalı ({items.length - onCount})
+            {t("Kapalı ({n})", { n: items.length - onCount })}
           </button>
         </div>
       </div>
 
-      {filtered.length === 0 && <div className="placeholder">Otomasyon bulunamadı.</div>}
+      {filtered.length === 0 && <div className="placeholder">{t("Otomasyon bulunamadı.")}</div>}
 
       <div className="auto-list">
         {filtered.map((a) => {
@@ -166,13 +167,13 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
               <div className="auto-text">
                 <span className="auto-name">
                   {a.name}
-                  {a.running > 0 && <span className="badge">çalışıyor</span>}
+                  {a.running > 0 && <span className="badge">{t("çalışıyor")}</span>}
                 </span>
                 <span className="auto-sub">
                   {trig.length ? trig.join(" · ") : c?.description || "…"}
                 </span>
               </div>
-              <span className="auto-last" title={a.lastTriggered?.toLocaleString("tr-TR") ?? ""}>
+              <span className="auto-last" title={a.lastTriggered?.toLocaleString(locale()) ?? ""}>
                 {relTime(a.lastTriggered)}
               </span>
               <button
@@ -180,11 +181,11 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
                 disabled={busy.has(a.entityId)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  withBusy(a.entityId, () => runNow(conn, a.entityId), `"${a.name}" çalıştırıldı`);
+                  withBusy(a.entityId, () => runNow(conn, a.entityId), t("\"{name}\" çalıştırıldı", { name: a.name }));
                 }}
-                title="Koşulları atlayıp şimdi çalıştır"
+                title={t("Koşulları atlayıp şimdi çalıştır")}
               >
-                ▶ Çalıştır
+                ▶ {t("Çalıştır")}
               </button>
             </div>
           );
@@ -193,12 +194,12 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
 
       {backups.length > 0 && (
         <section className="backups">
-          <h2>Son silinenler</h2>
+          <h2>{t("Son silinenler")}</h2>
           {backups.map((b) => (
             <div key={`${b.config.id}-${b.deletedAt}`} className="auto-row static">
               <div className="auto-text">
                 <span className="auto-name">{b.config.alias || b.config.id}</span>
-                <span className="auto-sub">{new Date(b.deletedAt).toLocaleString("tr-TR")} tarihinde silindi</span>
+                <span className="auto-sub">{new Date(b.deletedAt).toLocaleString(locale())} tarihinde silindi</span>
               </div>
               <button
                 className="btn-small"
@@ -206,12 +207,12 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
                   withBusy(`backup-${b.config.id}`, async () => {
                     await saveAutomation(baseUrl, token, b.config);
                     setBackups(removeBackup(b.config.id));
-                  }, "Geri yüklendi")
+                  }, t("Geri yüklendi"))
                 }
               >
-                ↺ Geri yükle
+                ↺ {t("Geri yükle")}
               </button>
-              <button className="btn-small ghost" onClick={() => setBackups(removeBackup(b.config.id))} title="Yedeği unut">
+              <button className="btn-small ghost" onClick={() => setBackups(removeBackup(b.config.id))} title={t("Yedeği unut")}>
                 ✕
               </button>
             </div>
@@ -237,19 +238,19 @@ export default function Automations({ conn, entities, baseUrl, token }: Props) {
             setOpenId(null);
             setEditing({ mode, config: { ...cfg, id: cfg.id ?? open.configId } });
           }}
-          onRun={() => withBusy(open.entityId, () => runNow(conn, open.entityId), `"${open.name}" çalıştırıldı`)}
+          onRun={() => withBusy(open.entityId, () => runNow(conn, open.entityId), t("\"{name}\" çalıştırıldı", { name: open.name }))}
           onToggle={() => withBusy(open.entityId, () => setEnabled(conn, open.entityId, !open.enabled))}
           onDelete={() =>
             withBusy(
               open.entityId,
               async () => {
-                if (!open.configId) throw new Error("Bu otomasyon YAML dosyasında elle tanımlı; buradan silinemez.");
+                if (!open.configId) throw new Error(t("Bu otomasyon YAML dosyasında elle tanımlı; buradan silinemez."));
                 const cfg = configs[open.entityId] ?? (await getConfig(conn, open.entityId));
                 setBackups(addBackup({ ...cfg, id: cfg.id ?? open.configId }));
                 await deleteAutomation(baseUrl, token, open.configId);
                 setOpenId(null);
               },
-              `"${open.name}" silindi (yedeği alındı)`,
+              t("\"{name}\" silindi (yedeği alındı)", { name: open.name }),
             )
           }
         />
@@ -277,10 +278,10 @@ interface DetailProps {
 }
 
 const MODE_TR: Record<string, string> = {
-  single: "Tek (çalışırken yeniden tetiklenmez)",
-  restart: "Yeniden başlat",
-  queued: "Sıraya al",
-  parallel: "Paralel",
+  single: tk("Tek (çalışırken yeniden tetiklenmez)"),
+  restart: tk("Yeniden başlat"),
+  queued: tk("Sıraya al"),
+  parallel: tk("Paralel"),
 };
 
 function AutomationDetail({ item, config, names, busy, baseUrl, onClose, onReload, onEdit, onRun, onToggle, onDelete }: DetailProps) {
@@ -320,10 +321,10 @@ function AutomationDetail({ item, config, names, busy, baseUrl, onClose, onReloa
           <div style={{ minWidth: 0 }}>
             <h3>{item.name}</h3>
             <span className="muted small">
-              Son çalışma: {relTime(item.lastTriggered)} · {MODE_TR[item.mode] ?? item.mode}
+              {t("Son çalışma: {when}", { when: relTime(item.lastTriggered) })} · {MODE_TR[item.mode] ? t(MODE_TR[item.mode]) : item.mode}
             </span>
           </div>
-          <button className="close" onClick={onClose} aria-label="Kapat">
+          <button className="close" onClick={onClose} aria-label={t("Kapat|pencere")}>
             ✕
           </button>
         </header>
@@ -333,39 +334,39 @@ function AutomationDetail({ item, config, names, busy, baseUrl, onClose, onReloa
         <div className="detail-actions">
           <label className="inline-toggle">
             <Toggle on={item.enabled} disabled={busy} onChange={onToggle} />
-            {item.enabled ? "Etkin" : "Devre dışı"}
+            {item.enabled ? t("Etkin") : t("Devre dışı")}
           </label>
           <button className="btn-small" disabled={busy} onClick={onRun}>
-            ▶ Şimdi çalıştır
+            ▶ {t("Şimdi çalıştır")}
           </button>
           {item.configId && (
             <button className="btn-small" disabled={!config} onClick={() => onEdit("edit")}>
-              ✎ Düzenle
+              ✎ {t("Düzenle")}
             </button>
           )}
           <button className="btn-small" disabled={!config} onClick={() => onEdit("copy")}>
-            ⧉ Kopyala
+            ⧉ {t("Kopyala")}
           </button>
           {editUrl && (
             <button
               className="btn-small"
               onClick={() => (isTauri() ? openUrl(editUrl) : window.open(editUrl, "_blank"))}
             >
-              HA'da düzenle ↗
+              {t("HA'da düzenle")} ↗
             </button>
           )}
         </div>
 
         {!config ? (
-          <div className="muted small" style={{ marginTop: 16 }}>Yükleniyor…</div>
+          <div className="muted small" style={{ marginTop: 16 }}>{t("Yükleniyor…")}</div>
         ) : (
           <>
-            {block("Ne zaman (tetikleyiciler)", triggersOf(config).map((t) => describeTrigger(t, names)), "Tetikleyici yok")}
-            {block("Eğer (koşullar)", conditionsOf(config).map((c) => describeCondition(c, names)), "Koşul yok — her tetiklenişte çalışır")}
-            {block("Yap (eylemler)", actionsOf(config).map((a) => describeAction(a, names)), "Eylem yok")}
+            {block(t("Ne zaman (tetikleyiciler)"), triggersOf(config).map((x) => describeTrigger(x, names)), t("Tetikleyici yok"))}
+            {block(t("Eğer (koşullar)"), conditionsOf(config).map((c) => describeCondition(c, names)), t("Koşul yok — her tetiklenişte çalışır"))}
+            {block(t("Yap (eylemler)"), actionsOf(config).map((a) => describeAction(a, names)), t("Eylem yok"))}
 
             <button className="link" style={{ marginTop: 14 }} onClick={() => setShowYaml((s) => !s)}>
-              {showYaml ? "YAML'ı gizle" : "YAML'ı göster"}
+              {showYaml ? t("YAML'ı gizle") : t("YAML'ı göster")}
             </button>
             {showYaml && <pre className="yaml">{stringify(config)}</pre>}
           </>
@@ -374,17 +375,17 @@ function AutomationDetail({ item, config, names, busy, baseUrl, onClose, onReloa
         <div className="danger-zone">
           {!confirm ? (
             <button className="btn-small danger" disabled={busy || !item.configId} onClick={() => setConfirm(true)}
-              title={item.configId ? "" : "YAML dosyasında elle tanımlı otomasyonlar buradan silinemez"}>
+              title={item.configId ? "" : t("YAML dosyasında elle tanımlı otomasyonlar buradan silinemez")}>
               Sil
             </button>
           ) : (
             <div className="confirm">
-              <span>"{item.name}" silinsin mi? Yedeği "Son silinenler"e alınır.</span>
+              <span>{t("\"{name}\" silinsin mi? Yedeği \"Son silinenler\"e alınır.", { name: item.name })}</span>
               <button className="btn-small danger" disabled={busy} onClick={onDelete}>
-                Evet, sil
+                {t("Evet, sil")}
               </button>
               <button className="btn-small" onClick={() => setConfirm(false)}>
-                Vazgeç
+                {t("Vazgeç")}
               </button>
             </div>
           )}

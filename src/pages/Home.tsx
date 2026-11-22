@@ -13,6 +13,7 @@ import Icon from "../ui/Icon";
 import type { Page } from "../layout/Sidebar";
 import { discoverCameras } from "../ha/cameras";
 import { CameraCard } from "./Cameras";
+import { t } from "../i18n";
 
 interface Props {
   onOpen: (key: string) => void;
@@ -27,7 +28,7 @@ function Kpi({ icon, label, value, sub, stale, muted }: { icon: string; label: s
       <div className="kpi-head">
         <span className="kpi-icon"><Icon name={icon} size={16} /></span>
         <span className="kpi-label">{label}</span>
-        {stale && <span className="stale-tag" title="Bağlantı yok; değer güncel olmayabilir">güncel değil</span>}
+        {stale && <span className="stale-tag" title={t("Bağlantı yok; değer güncel olmayabilir")}>{t("güncel değil")}</span>}
       </div>
       <span className={`kpi-value ${muted ? "muted" : ""}`}>{value}</span>
       {sub && <span className="kpi-sub">{sub}</span>}
@@ -63,9 +64,9 @@ export default function Home({ onOpen, onNavigate }: Props) {
     };
   }, [conn, hasEnergy, stale, visible]);
 
-  const dailyValue = daily === undefined ? (hasEnergy ? "…" : "Veri yok") : daily.today == null ? "Veri yok" : fmtKwh(daily.today);
+  const dailyValue = daily === undefined ? (hasEnergy ? "…" : t("Veri yok")) : daily.today == null ? t("Veri yok") : fmtKwh(daily.today);
   const dailySub =
-    daily?.yesterday != null ? `Dün toplam ${fmtKwh(daily.yesterday)}` : daily ? "Dün için veri yok" : undefined;
+    daily?.yesterday != null ? t("Dün toplam {x}", { x: fmtKwh(daily.yesterday) }) : daily ? t("Dün için veri yok") : undefined;
 
   /* Sahneler: yalnızca HA'da gerçekten var olanlar */
   const scenes = Object.values(entities)
@@ -85,24 +86,24 @@ export default function Home({ onOpen, onNavigate }: Props) {
   return (
     <div className="page">
       <div className="kpi-row">
-        <Kpi icon="power" label="Aktif cihazlar" value={`${active.on} / ${active.total}`} sub="açık / kontrol edilebilir" stale={stale} />
+        <Kpi icon="power" label={t("Aktif cihazlar")} value={`${active.on} / ${active.total}`} sub={t("açık / kontrol edilebilir")} stale={stale} />
         <Kpi
           icon="energy"
-          label="Anlık tüketim"
-          value={live.items.length ? fmtWatts(live.total) : "Veri yok"}
-          sub={live.items.length ? `${live.items.filter((i) => i.watts > 0.5).length} cihaz çekiyor` : "Güç sensörü yok"}
+          label={t("Anlık tüketim")}
+          value={live.items.length ? fmtWatts(live.total) : t("Veri yok")}
+          sub={live.items.length ? t("{n} cihaz çekiyor", { n: live.items.filter((i) => i.watts > 0.5).length }) : t("Güç sensörü yok")}
           stale={stale}
           muted={!live.items.length}
         />
-        <Kpi icon="chart" label="Bugünkü enerji" value={dailyValue} sub={dailySub} stale={stale} muted={daily?.today == null && daily !== undefined} />
-        <Kpi icon="user" label="Ev durumu" value={pres.value} sub={pres.sub} stale={stale} muted={pres.muted} />
+        <Kpi icon="chart" label={t("Bugünkü enerji")} value={dailyValue} sub={dailySub} stale={stale} muted={daily?.today == null && daily !== undefined} />
+        <Kpi icon="user" label={t("Ev durumu")} value={pres.value} sub={pres.sub} stale={stale} muted={pres.muted} />
       </div>
 
       {scenes.length > 0 && (
         <section className="section">
           <div className="section-head">
-            <h2>Hızlı sahneler</h2>
-            <span className="section-meta">Home Assistant'taki sahneler</span>
+            <h2>{t("Hızlı sahneler")}</h2>
+            <span className="section-meta">{t("Home Assistant'taki sahneler")}</span>
           </div>
           <div className="scene-row">
             {scenes.map((s) => {
@@ -112,7 +113,7 @@ export default function Home({ onOpen, onNavigate }: Props) {
                 <button key={s.entity_id} className={`scene-btn ${busy ? "busy" : ""}`} disabled={stale || busy} onClick={() => commands.run(s, friendly(s))}>
                   <Icon name="scene" size={16} />
                   <span className="scene-name">{friendly(s)}</span>
-                  <span className="scene-sub">{busy ? "Çalıştırılıyor…" : Number.isNaN(last) ? "Hiç çalışmadı" : relTime(new Date(last))}</span>
+                  <span className="scene-sub">{busy ? t("Çalıştırılıyor…") : Number.isNaN(last) ? t("Hiç çalışmadı") : relTime(new Date(last))}</span>
                 </button>
               );
             })}
@@ -122,11 +123,11 @@ export default function Home({ onOpen, onNavigate }: Props) {
 
       <section className="section">
         <div className="section-head">
-          <h2>Favoriler</h2>
-          {favs.length > 1 && <span className="section-meta">Sıralamak için sürükle</span>}
+          <h2>{t("Favoriler")}</h2>
+          {favs.length > 1 && <span className="section-meta">{t("Sıralamak için sürükle")}</span>}
         </div>
         {favs.length === 0 ? (
-          <EmptyState icon="star" title="Henüz favori yok" text="Cihaz kartlarındaki yıldıza tıklayarak sık kullandıklarını buraya sabitleyebilirsin." />
+          <EmptyState icon="star" title={t("Henüz favori yok")} text={t("Cihaz kartlarındaki yıldıza tıklayarak sık kullandıklarını buraya sabitleyebilirsin.")} />
         ) : (
           <div className="grid-wrap">
             <div className="device-grid" onDragEnd={() => { setDragFrom(null); setDragOver(null); }}>
@@ -155,8 +156,8 @@ export default function Home({ onOpen, onNavigate }: Props) {
       {cams.length > 0 && (
         <section className="section">
           <div className="section-head">
-            <h2>Kameralar</h2>
-            <button className="link" onClick={() => onNavigate("cameras")}>Kameralar sayfası</button>
+            <h2>{t("Kameralar")}</h2>
+            <button className="link" onClick={() => onNavigate("cameras")}>{t("Kameralar sayfası")}</button>
           </div>
           <div className="cam-grid small">
             {cams.map((c) => (
@@ -168,8 +169,8 @@ export default function Home({ onOpen, onNavigate }: Props) {
 
       <section className="section">
         <div className="section-head">
-          <h2>Odalar</h2>
-          <button className="link" onClick={() => onNavigate("rooms")}>Tümünü gör</button>
+          <h2>{t("Odalar")}</h2>
+          <button className="link" onClick={() => onNavigate("rooms")}>{t("Tümünü gör")}</button>
         </div>
         <div className="room-cards">
           {rooms.map(([area, list]) => {
@@ -179,8 +180,8 @@ export default function Home({ onOpen, onNavigate }: Props) {
               <button key={area} className="room-card" onClick={() => onNavigate("rooms")}>
                 <span className="room-name">{area}</span>
                 <span className="room-meta">
-                  {list.length} cihaz · <b className={on ? "on" : ""}>{on} açık</b>
-                  {unavail > 0 && <> · <span className="warn-text">{unavail} erişilemiyor</span></>}
+                  {t("{n} cihaz", { n: list.length })} · <b className={on ? "on" : ""}>{t("{n} açık", { n: on })}</b>
+                  {unavail > 0 && <> · <span className="warn-text">{t("{n} erişilemiyor", { n: unavail })}</span></>}
                 </span>
               </button>
             );

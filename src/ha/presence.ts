@@ -4,6 +4,7 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { friendly } from "./devices";
 import { relTime } from "./automations";
+import { t } from "../i18n";
 
 /** Bu süreden eski GPS konumu güncel sayılmaz */
 export const GPS_STALE_MS = 6 * 60 * 60 * 1000;
@@ -28,24 +29,24 @@ export function staleSince(person: HassEntity, entities: HassEntities, now = Dat
 
 export function presence(entities: HassEntities, now = Date.now()): Presence {
   const people = Object.values(entities).filter((e) => e.entity_id.startsWith("person."));
-  if (!people.length) return { value: "Veri yok", sub: "HA'da kişi (person) tanımlı değil", muted: true };
+  if (!people.length) return { value: t("Veri yok"), sub: t("HA'da kişi (person) tanımlı değil"), muted: true };
   const known = people.filter((p) => p.state !== "unknown" && p.state !== "unavailable");
-  if (!known.length) return { value: "Bilinmiyor", sub: `${people.length} kişi, konum bilgisi yok`, muted: true };
+  if (!known.length) return { value: t("Bilinmiyor"), sub: t("{n} kişi, konum bilgisi yok", { n: people.length }), muted: true };
 
   const fresh = known.filter((p) => !staleSince(p, entities, now));
   const stale = known.filter((p) => staleSince(p, entities, now));
-  const staleNote = stale.length ? ` · ${names(stale)}: konum güncel değil` : "";
+  const staleNote = stale.length ? " · " + t("{names}: konum güncel değil", { names: names(stale) }) : "";
 
   if (!fresh.length) {
     const last = stale.map((p) => staleSince(p, entities, now)!.getTime()).sort((a, b) => b - a)[0];
     return {
-      value: "Konum güncel değil",
-      sub: `${names(stale)} · son konum ${relTime(new Date(last))}. Telefonda HA konum izni "Her Zaman" olmalı.`,
+      value: t("Konum güncel değil"),
+      sub: t("{names} · son konum {when}. Telefonda HA konum izni \"Her Zaman\" olmalı.", { names: names(stale), when: relTime(new Date(last)) }),
       muted: true,
     };
   }
   const home = fresh.filter((p) => p.state === "home");
-  if (home.length) return { value: "Evde", sub: names(home) + staleNote, muted: false };
+  if (home.length) return { value: t("Evde"), sub: names(home) + staleNote, muted: false };
   const lastLeft = fresh.map((p) => new Date(p.last_changed)).sort((a, b) => b.getTime() - a.getTime())[0];
-  return { value: "Dışarıda", sub: `${names(fresh)} · ${relTime(lastLeft)} ayrıldı${staleNote}`, muted: false };
+  return { value: t("Dışarıda"), sub: t("{names} · {when} ayrıldı", { names: names(fresh), when: relTime(lastLeft) }) + staleNote, muted: false };
 }

@@ -1,5 +1,6 @@
 // Kullanıcı tercihleri (favoriler, sidebar). Yerel ve kalıcı; depolama yoksa sessizce varsayılana döner.
 import { useCallback, useEffect, useState } from "react";
+import { defaultLang, type Lang } from "../i18n";
 
 const KEY = "ha-desktop.prefs";
 
@@ -13,9 +14,11 @@ export interface Prefs {
   hotkey: string;
   /** Home Assistant'tan (Siri) gelen bilgisayar komutlarını çalıştır */
   pcControl: boolean;
+  /** Arayüz dili */
+  lang: Lang;
 }
 
-const DEFAULTS: Prefs = { favorites: [], sidebarCollapsed: false, closeToTray: true, hotkey: "Ctrl+Alt+H", pcControl: true };
+const DEFAULTS: Prefs = { favorites: [], sidebarCollapsed: false, closeToTray: true, hotkey: "Ctrl+Alt+H", pcControl: true, lang: defaultLang() };
 
 function read(): Prefs {
   try {

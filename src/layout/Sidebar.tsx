@@ -3,28 +3,29 @@ import Icon from "../ui/Icon";
 import EnergyWidget from "../components/EnergyWidget";
 import PrayerTimes from "../components/PrayerTimes";
 import type { ConnStatus } from "../state/ha";
+import { t, tk } from "../i18n";
 
 export type Page =
   | "dashboard" | "rooms" | "devices" | "buttons" | "motion" | "cameras" | "vacuum" | "automations" | "energy" | "settings";
 
 export const NAV: { page: Page; label: string; icon: string }[] = [
-  { page: "dashboard", label: "Kontrol Paneli", icon: "home" },
-  { page: "rooms", label: "Odalar", icon: "rooms" },
-  { page: "devices", label: "Tüm Cihazlar", icon: "devices" },
-  { page: "buttons", label: "Akıllı Düğmeler", icon: "button" },
-  { page: "motion", label: "Hareket Sensörleri", icon: "motion" },
-  { page: "cameras", label: "Kameralar", icon: "camera" },
-  { page: "vacuum", label: "Robot Süpürge", icon: "vacuum" },
-  { page: "automations", label: "Otomasyonlar", icon: "automation" },
-  { page: "energy", label: "Enerji", icon: "energy" },
-  { page: "settings", label: "Ayarlar", icon: "settings" },
+  { page: "dashboard", label: tk("Kontrol Paneli"), icon: "home" },
+  { page: "rooms", label: tk("Odalar"), icon: "rooms" },
+  { page: "devices", label: tk("Tüm Cihazlar"), icon: "devices" },
+  { page: "buttons", label: tk("Akıllı Düğmeler"), icon: "button" },
+  { page: "motion", label: tk("Hareket Sensörleri"), icon: "motion" },
+  { page: "cameras", label: tk("Kameralar"), icon: "camera" },
+  { page: "vacuum", label: tk("Robot Süpürge"), icon: "vacuum" },
+  { page: "automations", label: tk("Otomasyonlar"), icon: "automation" },
+  { page: "energy", label: tk("Enerji"), icon: "energy" },
+  { page: "settings", label: tk("Ayarlar"), icon: "settings" },
 ];
 
 export const STATUS_TEXT: Record<ConnStatus, string> = {
-  connecting: "Bağlanıyor",
-  connected: "Bağlı",
-  reconnecting: "Yeniden bağlanıyor",
-  disconnected: "Bağlantı kesildi",
+  connecting: tk("Bağlanıyor"),
+  connected: tk("Bağlı"),
+  reconnecting: tk("Yeniden bağlanıyor"),
+  disconnected: tk("Bağlantı kesildi"),
 };
 
 interface Props {
@@ -49,24 +50,24 @@ export default function Sidebar({ page, onNavigate, collapsed, onToggleCollapsed
         <button
           className="icon-btn collapse-btn"
           onClick={onToggleCollapsed}
-          title={collapsed ? "Menüyü genişlet" : "Menüyü daralt"}
-          aria-label={collapsed ? "Menüyü genişlet" : "Menüyü daralt"}
+          title={collapsed ? t("Menüyü genişlet") : t("Menüyü daralt")}
+          aria-label={collapsed ? t("Menüyü genişlet") : t("Menüyü daralt")}
         >
           <Icon name={collapsed ? "chevronRight" : "chevronLeft"} size={16} />
         </button>
       </div>
 
-      <nav className="nav" aria-label="Sayfalar">
+      <nav className="nav" aria-label={t("Sayfalar")}>
         {NAV.map((n) => (
           <button
             key={n.page}
             className={`nav-item ${page === n.page ? "active" : ""}`}
             onClick={() => onNavigate(n.page)}
-            title={collapsed ? n.label : undefined}
+            title={collapsed ? t(n.label) : undefined}
             aria-current={page === n.page ? "page" : undefined}
           >
             <Icon name={n.icon} size={18} />
-            {!collapsed && <span>{n.label}</span>}
+            {!collapsed && <span>{t(n.label)}</span>}
           </button>
         ))}
       </nav>
@@ -82,7 +83,7 @@ export default function Sidebar({ page, onNavigate, collapsed, onToggleCollapsed
         <span className={`dot ${status}`} />
         {!collapsed && (
           <div className="foot-text">
-            <span>{STATUS_TEXT[status]}</span>
+            <span>{t(STATUS_TEXT[status])}</span>
             <span className="muted small">{url.replace(/^https?:\/\//, "")}</span>
           </div>
         )}

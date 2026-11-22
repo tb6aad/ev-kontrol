@@ -4,6 +4,7 @@ import Icon from "../ui/Icon";
 import { useDismiss, useToast } from "../state/toast";
 import type { ConnStatus } from "../state/ha";
 import { STATUS_TEXT } from "./Sidebar";
+import { locale, t } from "../i18n";
 
 interface Props {
   title: string;
@@ -38,21 +39,21 @@ export default function Header({ title, summary, status, onSettings }: Props) {
       </div>
 
       <div className="topbar-right">
-        <div className="clock" title={now.toLocaleString("tr-TR")}>
-          <span className="clock-time">{now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
-          <span className="clock-date">{now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })}</span>
+        <div className="clock" title={now.toLocaleString(locale())}>
+          <span className="clock-time">{now.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })}</span>
+          <span className="clock-date">{now.toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long" })}</span>
         </div>
 
         <span className={`conn-pill ${status}`} role="status">
           <span className={`dot ${status}`} />
-          {STATUS_TEXT[status]}
+          {t(STATUS_TEXT[status])}
         </span>
 
         <div className="pop-wrap" ref={popRef}>
           <button
             className="icon-btn"
-            aria-label={`Bildirimler${unread ? ` (${unread} yeni)` : ""}`}
-            title="Bildirimler"
+            aria-label={t("Bildirimler") + (unread ? " " + t("({n} yeni)", { n: unread }) : "")}
+            title={t("Bildirimler")}
             onClick={() => {
               setOpen((o) => !o);
               markRead();
@@ -64,22 +65,22 @@ export default function Header({ title, summary, status, onSettings }: Props) {
           {open && (
             <div className="popover notif-pop">
               <div className="pop-head">
-                <b>Bildirimler</b>
+                <b>{t("Bildirimler")}</b>
                 {history.length > 0 && (
                   <button className="link" onClick={clearHistory}>
-                    Temizle
+                    {t("Temizle")}
                   </button>
                 )}
               </div>
               {history.length === 0 ? (
-                <div className="empty-mini">Henüz bildirim yok.</div>
+                <div className="empty-mini">{t("Henüz bildirim yok.")}</div>
               ) : (
                 <ul className="notif-list">
                   {history.map((h) => (
                     <li key={h.id} className={h.kind}>
                       <Icon name={KIND_ICON[h.kind]} size={15} />
                       <span>{h.text}</span>
-                      <time>{new Date(h.at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time>
+                      <time>{new Date(h.at).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })}</time>
                     </li>
                   ))}
                 </ul>
@@ -88,7 +89,7 @@ export default function Header({ title, summary, status, onSettings }: Props) {
           )}
         </div>
 
-        <button className="icon-btn" title="Ayarlar" aria-label="Ayarlar" onClick={onSettings}>
+        <button className="icon-btn" title={t("Ayarlar")} aria-label={t("Ayarlar")} onClick={onSettings}>
           <Icon name="settings" size={18} />
         </button>
       </div>

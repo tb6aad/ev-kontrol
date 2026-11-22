@@ -10,6 +10,7 @@ import { ToastProvider, useToast } from "./state/toast";
 import { usePrefs } from "./state/prefs";
 import { isAppVisible, useDesktopSync } from "./state/desktop";
 import { watchPcCommands } from "./state/pcControl";
+import { setLang, t } from "./i18n";
 import Login from "./components/Login";
 import Automations from "./components/Automations";
 import SmartButtons from "./components/SmartButtons";
@@ -59,10 +60,11 @@ function AppInner() {
   const unsubRef = useRef<(() => void) | null>(null);
   const cancelRef = useRef(false);
   const { prefs, update } = usePrefs();
+  setLang(prefs.lang); // çocuklar çizilmeden önce dil ayarlı olsun
   const narrow = useNarrow(1000);
   const pcControlRef = useRef(prefs.pcControl);
   pcControlRef.current = prefs.pcControl;
-  useDesktopSync(prefs.closeToTray, prefs.hotkey, (msg) => notify("error", msg, { key: "hotkey" }));
+  useDesktopSync(prefs.closeToTray, prefs.hotkey, prefs.lang, (msg) => notify("error", msg, { key: "hotkey" }));
 
   /* Pencere tepsideyken durum değişiklikleri arayüzü yeniden çizdirmesin:
      son hali sakla, pencere görünür olunca tek seferde uygula. */
@@ -113,19 +115,19 @@ function AppInner() {
           // Bağlantı yaşam döngüsü: kütüphane kopunca kendisi yeniden bağlanır
           c.addEventListener("disconnected", () => {
             setStatus("reconnecting");
-            notify("warning", "Home Assistant bağlantısı kesildi. Yeniden bağlanılıyor…", { key: "conn", cooldownMs: 20_000 });
+            notify("warning", t("Home Assistant bağlantısı kesildi. Yeniden bağlanılıyor…"), { key: "conn", cooldownMs: 20_000 });
           });
           c.addEventListener("ready", () => {
             setStatus("connected");
-            notify("success", "Bağlantı yeniden sağlandı.", { key: "conn-ok", cooldownMs: 10_000 });
+            notify("success", t("Bağlantı yeniden sağlandı."), { key: "conn-ok", cooldownMs: 10_000 });
             // Kopukken eklenen/silinen cihazlar için kayıtları tazele (durumlar abonelikle zaten gelir)
             fetchRegistries(c).then(setRegistries).catch(() => {});
           });
           c.addEventListener("reconnect-error", (_conn, err) => {
             if (err === ERR_INVALID_AUTH) {
               setStatus("disconnected");
-              notify("error", "Token geçersiz hale geldi; yeniden giriş gerekli.", { key: "auth" });
-              setError("Token geçersiz.");
+              notify("error", t("Token geçersiz hale geldi; yeniden giriş gerekli."), { key: "auth" });
+              setError(t("Token geçersiz."));
               setShowLogin(true);
               setConn(null);
             }
@@ -136,7 +138,7 @@ function AppInner() {
           break;
         } catch (e) {
           const msg = (e as Error).message;
-          const authError = msg.startsWith("Token geçersiz");
+          const authError = (e as Error).name === "AuthError";
           if (!auto || authError || cancelRef.current) {
             setError(msg);
             setStatus("disconnected");
@@ -162,7 +164,7 @@ function AppInner() {
         if (s) return start(s, false, true);
       })
       .catch((e) => {
-        setError(`Kayıtlı token okunamadı: ${e}`);
+        setError(t("Kayıtlı token okunamadı: {e}", { e: String(e) }));
         setBooting(false);
       });
   }, [start]);
@@ -189,12 +191,13 @@ function AppInner() {
 
   const connected = status === "connected";
   const commands = useCommandTracker(entities, conn, connected);
-  const devices = useMemo(() => (registries ? buildDevices(entities, registries) : []), [entities, registries]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dil değişince etiketler yeniden üretilsin
+  const devices = useMemo(() => (registries ? buildDevices(entities, registries) : []), [entities, registries, prefs.lang]);
   const controls = useMemo(() => ({ status, commands }), [status, commands]);
 
   /* ---------------- Giriş / bağlanma ekranları ---------------- */
 
-  if (booting) return <div className="login muted">Bağlanıyor…</div>;
+  if (booting) return <div className="login muted">{t("Bağlanıyor…")}</div>;
 
   if (saved && !conn && !showLogin && (busy || !error)) {
     return (
@@ -202,10 +205,10 @@ function AppInner() {
         <div className="login-card connecting">
           <h1>Ev Kontrol</h1>
           <div className="spinner" />
-          <p>Home Assistant'a bağlanılıyor…</p>
+          <p>{t("Home Assistant'a bağlanılıyor…")}</p>
           {attempt > 0 && (
             <p className="muted small">
-              {saved.url} şu an yanıt vermiyor, tekrar deneniyor ({attempt}. deneme). Ağ ya da HA açılınca kendiliğinden bağlanır.
+              {t("{url} şu an yanıt vermiyor, tekrar deneniyor ({n}. deneme). Ağ ya da HA açılınca kendiliğinden bağlanır.", { url: saved.url, n: attempt })}
             </p>
           )}
           <button
@@ -215,7 +218,7 @@ function AppInner() {
               setShowLogin(true);
             }}
           >
-            Farklı adres / token ile giriş yap
+            {t("Farklı adres / token ile giriş yap")}
           </button>
         </div>
       </div>
@@ -243,17 +246,22 @@ function AppInner() {
 
   const ha: HaState = { conn, entities, registries, devices, settings, status, commands };
   const openDevice = devices.find((d) => d.key === openKey);
-  const title = NAV.find((n) => n.page === page)?.label ?? "";
+  const navLabel = NAV.find((n) => n.page === page)?.label;
+  const title = navLabel ? t(navLabel) : "";
   const onCount = activeStats(devices).on;
   const live = livePower(entities);
   const roomCount = new Set(devices.map((d) => d.area)).size;
-  const summary = `${onCount} cihaz açık · ${live.items.length ? fmtWatts(live.total) : "güç verisi yok"} · ${roomCount} oda`;
+  const summary = [
+    t("{n} cihaz açık", { n: onCount }),
+    live.items.length ? fmtWatts(live.total) : t("güç verisi yok"),
+    t("{n} oda", { n: roomCount }),
+  ].join(" · ");
   const collapsed = prefs.sidebarCollapsed || narrow;
 
   return (
     <HaCtx.Provider value={ha}>
       <ControlsCtx.Provider value={controls}>
-        <div className="app">
+        <div className="app" key={prefs.lang}>
           <Sidebar
             page={page}
             onNavigate={setPage}
@@ -270,8 +278,8 @@ function AppInner() {
               <div className="offline-banner" role="alert">
                 <Icon name="alert" size={16} />
                 {status === "reconnecting"
-                  ? "Home Assistant bağlantısı kesildi; yeniden bağlanılıyor. Gösterilen değerler güncel olmayabilir."
-                  : "Home Assistant'a bağlı değil. Gösterilen değerler güncel değil."}
+                  ? t("Home Assistant bağlantısı kesildi; yeniden bağlanılıyor. Gösterilen değerler güncel olmayabilir.")
+                  : t("Home Assistant'a bağlı değil. Gösterilen değerler güncel değil.")}
               </div>
             )}
             <main className={`content ${connected ? "" : "stale"}`} key={page}>

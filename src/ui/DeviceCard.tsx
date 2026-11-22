@@ -5,6 +5,7 @@ import { useHaControls } from "../state/ha";
 import { usePrefs } from "../state/prefs";
 import Toggle from "../components/Toggle";
 import Icon from "./Icon";
+import { t } from "../i18n";
 
 interface Props {
   device: DeviceItem;
@@ -31,7 +32,7 @@ function DeviceCardInner({ device: d, onOpen, draggable, onDragStart, onDragOver
   const fav = isFavorite(d.key);
   const extras = extraInfo(d);
 
-  const stateText = busy ? "Komut gönderiliyor…" : failed ? "Komut doğrulanamadı" : formatState(p);
+  const stateText = busy ? t("Komut gönderiliyor…") : failed ? t("Komut doğrulanamadı") : formatState(p);
   const cls = [
     "dcard",
     on && "on",
@@ -76,15 +77,15 @@ function DeviceCardInner({ device: d, onOpen, draggable, onDragStart, onDragOver
             on={on}
             busy={busy}
             disabled={offline}
-            label={`${d.name} ${on ? "kapat" : "aç"}`}
+            label={on ? t("{name} kapat", { name: d.name }) : t("{name} aç", { name: d.name })}
             onChange={() => commands.run(p, d.name)}
           />
         ) : PRESS_DOMAINS.has(dom) && !unavailable ? (
           <button
             className="icon-btn small"
             disabled={offline || busy}
-            title="Çalıştır"
-            aria-label={`${d.name} çalıştır`}
+            title={t("Çalıştır")}
+            aria-label={t("{name} çalıştır", { name: d.name })}
             onClick={(e) => {
               e.stopPropagation();
               commands.run(p, d.name);
@@ -106,8 +107,8 @@ function DeviceCardInner({ device: d, onOpen, draggable, onDragStart, onDragOver
         <span className="dcard-extra">{extras.length ? extras.join(" · ") : " "}</span>
         <button
           className={`fav-btn ${fav ? "active" : ""}`}
-          title={fav ? "Favorilerden çıkar" : "Favorilere ekle"}
-          aria-label={fav ? "Favorilerden çıkar" : "Favorilere ekle"}
+          title={fav ? t("Favorilerden çıkar") : t("Favorilere ekle")}
+          aria-label={fav ? t("Favorilerden çıkar") : t("Favorilere ekle")}
           aria-pressed={fav}
           onClick={(e) => {
             e.stopPropagation();

@@ -12,6 +12,7 @@ import {
 import { formatState } from "../ha/devices";
 import Toggle from "./Toggle";
 import Icon from "../ui/Icon";
+import { t, tk } from "../i18n";
 
 interface Props {
   conn: Connection;
@@ -22,14 +23,14 @@ interface Props {
 }
 
 const PRESS_ACTIONS: { value: string; label: string; domains: string[] }[] = [
-  { value: "toggle", label: "Aç / kapat", domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
-  { value: "on", label: "Aç", domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
-  { value: "off", label: "Kapat", domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
-  { value: "run", label: "Sahne / script çalıştır", domains: ["scene", "script"] },
+  { value: "toggle", label: tk("Aç / kapat"), domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
+  { value: "on", label: tk("Aç"), domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
+  { value: "off", label: tk("Kapat"), domains: ["light", "switch", "fan", "input_boolean", "media_player", "cover", "climate", "siren"] },
+  { value: "run", label: tk("Sahne / script çalıştır"), domains: ["scene", "script"] },
 ];
 const TURN_ACTIONS: { value: string; label: string; domains: string[] }[] = [
-  { value: "brightness", label: "Işık parlaklığı", domains: ["light"] },
-  { value: "volume", label: "Ses seviyesi", domains: ["media_player"] },
+  { value: "brightness", label: tk("Işık parlaklığı"), domains: ["light"] },
+  { value: "volume", label: tk("Ses seviyesi"), domains: ["media_player"] },
 ];
 
 interface LastPress {
@@ -84,7 +85,7 @@ export default function SmartButtons({ conn, entities, registries, baseUrl, toke
   }, [entities, buttons]);
 
   if (buttons.length === 0) {
-    return <div className="placeholder">Home Assistant'ta akıllı düğme bulunamadı.</div>;
+    return <div className="placeholder">{t("Home Assistant'ta akıllı düğme bulunamadı.")}</div>;
   }
 
   return (
@@ -195,12 +196,12 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
     const groups = new Map<string, { id: string; name: string }[]>();
     for (const e of Object.values(entities)) {
       if (!domains.includes(e.entity_id.split(".")[0])) continue;
-      const area = areaOf.get(e.entity_id) ?? "Odasız";
+      const area = areaOf.get(e.entity_id) ?? t("Odasız");
       if (!groups.has(area)) groups.set(area, []);
       groups.get(area)!.push({ id: e.entity_id, name: names(e.entity_id) });
     }
     return [...groups.entries()]
-      .sort(([a], [b]) => (a === "Odasız" ? 1 : b === "Odasız" ? -1 : a.localeCompare(b, "tr")))
+      .sort(([a], [b]) => (a === t("Odasız") ? 1 : b === t("Odasız") ? -1 : a.localeCompare(b, "tr")))
       .map(([area, list]) => [area, list.sort((a, b) => a.name.localeCompare(b.name, "tr"))] as const);
   }
 
@@ -225,10 +226,10 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
         }
       }
       setDraft(null);
-      setMsg("Kaydedildi. Düğmeye basıp deneyebilirsin.");
+      setMsg(t("Kaydedildi. Düğmeye basıp deneyebilirsin."));
       onSaved();
     } catch (e) {
-      setMsg(`Hata: ${(e as { message?: string })?.message ?? String(e)}`);
+      setMsg(`${t("Hata")}: ${(e as { message?: string })?.message ?? String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -241,13 +242,13 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
     (s.eventType === "*" || s.eventType === lastPress.eventType);
 
   const lastText = (() => {
-    if (!lastPress) return "Hangi tuşun hangisi olduğunu görmek için düğmeye bas.";
+    if (!lastPress) return t("Hangi tuşun hangisi olduğunu görmek için düğmeye bas.");
     const slot = btn.channels.flatMap((c) => c.slots).find(
       (s) => s.entityId === lastPress.entityId && (s.eventType === "*" || s.eventType === lastPress.eventType),
     );
     const ch = btn.channels.find((c) => slot && c.slots.includes(slot));
     const sec = Math.round((Date.now() - lastPress.at) / 1000);
-    return `Son basış: ${ch && btn.channels.length > 1 ? `${ch.label} · ` : ""}${slot?.label ?? lastPress.eventType} · ${sec < 2 ? "şimdi" : `${sec} sn önce`}`;
+    return `${t("Son basış")}: ${ch && btn.channels.length > 1 ? `${ch.label} · ` : ""}${slot?.label ?? lastPress.eventType} · ${sec < 2 ? t("şimdi") : t("{n} sn önce", { n: sec })}`;
   })();
 
   return (
@@ -259,7 +260,7 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
           <span className="muted small">
             {btn.area}
             {btn.model && ` · ${btn.model}`}
-            {btn.battery && ` · Pil: ${btn.battery.entity_id.startsWith("binary_sensor.") ? (btn.battery.state === "on" ? "zayıf ⚠️" : "iyi") : formatState(btn.battery)}`}
+            {btn.battery && ` · ${t("Pil")}: ${btn.battery.entity_id.startsWith("binary_sensor.") ? (btn.battery.state === "on" ? t("zayıf") + " ⚠️" : t("iyi")) : formatState(btn.battery)}`}
           </span>
         </div>
         <div className={`last-press ${lastPress && Date.now() - lastPress.at < 2000 ? "live" : ""}`}>{lastText}</div>
@@ -298,17 +299,17 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
                     setDraft({ ...mapping, [s.key]: { action: v as Assignment["action"], target: keep ? a!.target : "" } });
                   }}
                 >
-                  <option value="">— Hiçbir şey —</option>
+                  <option value="">{t("— Hiçbir şey —")}</option>
                   {actions.map((x) => (
                     <option key={x.value} value={x.value}>
-                      {x.label}
+                      {t(x.label)}
                     </option>
                   ))}
-                  {origCustom && <option value="custom">Özel eylem (mevcut)</option>}
+                  {origCustom && <option value="custom">{t("Özel eylem (mevcut)")}</option>}
                 </select>
                 {isCustom ? (
-                  <div className="custom-action" title="Orijinal otomasyondaki eylem olduğu gibi korunur">
-                    ✦ {a!.label || "Özel eylem"}
+                  <div className="custom-action" title={t("Orijinal otomasyondaki eylem olduğu gibi korunur")}>
+                    ✦ {a!.label || t("Özel eylem")}
                   </div>
                 ) : (
                   <select
@@ -317,7 +318,7 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
                     onChange={(e) => update(s, { target: e.target.value })}
                     className={a && !a.target ? "needs" : ""}
                   >
-                    <option value="">{a ? "Cihaz seç…" : ""}</option>
+                    <option value="">{a ? t("Cihaz seç…") : ""}</option>
                     {actDef &&
                       optionsFor(actDef.domains).map(([area, list]) => (
                         <optgroup key={area} label={area}>
@@ -338,7 +339,7 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
 
       {others.length > 0 && (
         <section className="channel">
-          <h4>Bu düğmeyi kullanan diğer otomasyonlar</h4>
+          <h4>{t("Bu düğmeyi kullanan diğer otomasyonlar")}</h4>
           {others.map((o) => (
             <div key={o.entityId} className="other-auto">
               <Toggle on={o.enabled} onChange={() => setEnabled(conn, o.entityId, !o.enabled)} />
@@ -347,7 +348,7 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
                 {configs[o.entityId]?.description && <span className="other-desc">{configs[o.entityId].description}</span>}
                 {o.enabled && derived.unmapped[o.name] && (
                   <span className="other-warn">
-                    Buradan ayarlanamayan: {derived.unmapped[o.name].join(", ")} — bu yüzden bu otomasyon açık kalır.
+                    {t("Buradan ayarlanamayan: {x} — bu yüzden bu otomasyon açık kalır.", { x: derived.unmapped[o.name].join(", ") })}
                   </span>
                 )}
               </div>
@@ -357,28 +358,28 @@ function ButtonEditor({ btn, conn, entities, registries, configs, autos, lastPre
       )}
 
       <div className="save-bar">
-        {managedAuto && !dirty && <span className="muted small">✓ Kayıtlı · {managedAuto.enabled ? "etkin" : "devre dışı"}</span>}
+        {managedAuto && !dirty && <span className="muted small">✓ {t("Kayıtlı")} · {managedAuto.enabled ? t("etkin") : t("devre dışı")}</span>}
         {fromExisting && !dirty && (
-          <span className="muted small">Seçimler mevcut otomasyonlarından okundu. Değiştirip kaydedebilirsin.</span>
+          <span className="muted small">{t("Seçimler mevcut otomasyonlarından okundu. Değiştirip kaydedebilirsin.")}</span>
         )}
         {canSave && enabledOthers.length > 0 && (
           <label className="check">
             <input type="checkbox" checked={disableOthers} onChange={(e) => setDisableOthers(e.target.checked)} />
-            Çakışmasın diye eski {enabledOthers.length} otomasyonu kapat (silinmez)
+            {t("Çakışmasın diye eski {n} otomasyonu kapat (silinmez)", { n: enabledOthers.length })}
           </label>
         )}
         {canSave && keptOthers.length > 0 && (
-          <span className="muted small">{keptOthers.length} otomasyon açık kalacak (ayarlanamayan eylemi var).</span>
+          <span className="muted small">{t("{n} otomasyon açık kalacak (ayarlanamayan eylemi var).", { n: keptOthers.length })}</span>
         )}
-        {msg && <span className={msg.startsWith("Hata") ? "error-text" : "ok-text"}>{msg}</span>}
+        {msg && <span className={msg.startsWith(t("Hata")) ? "error-text" : "ok-text"}>{msg}</span>}
         <span style={{ flex: 1 }} />
         {dirty && (
           <button className="btn-small" disabled={busy} onClick={() => setDraft(null)}>
-            Geri al
+            {t("Geri al")}
           </button>
         )}
         <button className="btn-primary" disabled={!canSave || busy} onClick={save}>
-          {busy ? "Kaydediliyor…" : "Kaydet"}
+          {busy ? t("Kaydediliyor…") : t("Kaydet")}
         </button>
       </div>
     </div>

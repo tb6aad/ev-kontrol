@@ -1,5 +1,7 @@
 # Ev Kontrol
 
+> **English:** A Windows desktop control panel for Home Assistant (Tauri 2 + React). The interface is available in Turkish and English — switch under *Settings → Language*.
+
 Home Assistant için Windows masaüstü kontrol paneli. Tauri 2, React ve TypeScript ile yazıldı. Yerel ağdaki Home Assistant'a WebSocket üzerinden bağlanır, bulut servisi kullanmaz.
 
 ## Özellikler
@@ -10,6 +12,7 @@ Home Assistant için Windows masaüstü kontrol paneli. Tauri 2, React ve TypeSc
 - **Akıllı düğmeler, hareket sensörleri, kameralar, robot süpürge ve enerji** sayfaları
 - **Tepsi:** kapatınca tepsiye gizlenir, `Ctrl+Alt+H` ile aç/gizle (değiştirilebilir), Windows açılışında başlatma
 - **Düşük kaynak kullanımı:** tepsideyken WebView2 askıya alınır, kamera ve zamanlayıcılar durur
+- **Dil:** Türkçe ve İngilizce arayüz (Ayarlar → Dil); cihaz ve oda adları Home Assistant’taki gibi kalır
 - **Bilgisayar kontrolü (Siri):** Home Assistant'tan gelen komutlarla bilgisayarı kilitleme, kapatma, ses ve medya kontrolü
 
 ## Kurulum
@@ -20,7 +23,7 @@ Gerekenler: [Node.js](https://nodejs.org/) 20+, [Rust](https://rustup.rs/) ve Wi
 npm install
 npm run tauri dev                         # geliştirme
 npm run tauri build -- --no-bundle        # src-tauri/target/release/ha-desktop.exe
-npm test                                  # birim testleri
+npm test                                  # birim testleri (çeviri eksiklerini de yakalar)
 ```
 
 İlk açılışta Home Assistant adresini (ör. `http://homeassistant.local:8123`) ve bir **uzun ömürlü erişim token'ı** girin. Token'ı HA'da *Profil → Güvenlik → Uzun ömürlü erişim token'ları* bölümünden oluşturabilirsiniz.

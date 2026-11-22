@@ -46,7 +46,7 @@ mod win {
         let args: &[&str] = if cancel {
             &["/a"]
         } else {
-            &["/s", "/t", "60", "/c", "Ev Kontrol: Home Assistant / Siri ile kapatma istendi. İptal için 'kapatmayı iptal et' de."]
+            &["/s", "/t", "60", "/c", "Ev Kontrol: Home Assistant / Siri ile kapatma istendi. Shutdown requested via Home Assistant / Siri."]
         };
         let st = Command::new("shutdown")
             .args(args)

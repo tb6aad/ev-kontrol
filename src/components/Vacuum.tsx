@@ -5,6 +5,7 @@ import type { Registries } from "../ha/client";
 import { formatState } from "../ha/devices";
 import Toggle from "./Toggle";
 import Icon from "../ui/Icon";
+import { t, tk } from "../i18n";
 
 interface Props {
   conn: Connection;
@@ -14,25 +15,25 @@ interface Props {
 }
 
 const STATUS_TR: Record<string, string> = {
-  sleeping: "Uykuda", idle: "Boşta", cleaning: "Temizliyor", returning_home: "İstasyona dönüyor",
-  remote_control_active: "Uzaktan kumanda", charging: "Şarj oluyor", paused: "Duraklatıldı", error: "Hata",
-  updating: "Güncelleniyor", emptying_the_bin: "Çöp boşaltılıyor", mapping: "Harita çıkarıyor",
-  saving_map: "Harita kaydediliyor", relocating: "Konum buluyor", sweeping: "Süpürüyor", mopping: "Paspaslıyor",
-  sweep_and_mop: "Süpürüp paspaslıyor", transitioning: "Geçiş", waiting_to_charge: "Şarj bekliyor",
-  docked: "İstasyonda", returning: "Dönüyor", unknown: "Bilinmiyor", unavailable: "Erişilemiyor",
+  sleeping: tk("Uykuda"), idle: tk("Boşta"), cleaning: tk("Temizliyor"), returning_home: tk("İstasyona dönüyor"),
+  remote_control_active: tk("Uzaktan kumanda"), charging: tk("Şarj oluyor"), paused: tk("Duraklatıldı"), error: tk("Hata"),
+  updating: tk("Güncelleniyor"), emptying_the_bin: tk("Çöp boşaltılıyor"), mapping: tk("Harita çıkarıyor"),
+  saving_map: tk("Harita kaydediliyor"), relocating: tk("Konum buluyor"), sweeping: tk("Süpürüyor"), mopping: tk("Paspaslıyor"),
+  sweep_and_mop: tk("Süpürüp paspaslıyor"), transitioning: tk("Geçiş"), waiting_to_charge: tk("Şarj bekliyor"),
+  docked: tk("İstasyonda"), returning: tk("Dönüyor"), unknown: tk("Bilinmiyor"), unavailable: tk("Erişilemiyor"),
 };
 
 const FAN_TR: Record<string, string> = {
-  off: "Kapalı", quiet: "Sessiz", balanced: "Dengeli", turbo: "Turbo", max: "Max", max_plus: "Max+",
+  off: tk("Kapalı"), quiet: tk("Sessiz"), balanced: tk("Dengeli"), turbo: tk("Turbo"), max: tk("Max"), max_plus: "Max+",
 };
 const MODE_TR: Record<string, string> = {
-  vac_and_mop: "Süpür + Paspas", vacuum: "Sadece süpür", mop: "Sadece paspas", customized: "Özel", custom: "Özel",
+  vac_and_mop: tk("Süpür + Paspas"), vacuum: tk("Sadece süpür"), mop: tk("Sadece paspas"), customized: tk("Özel"), custom: tk("Özel"),
 };
 const WATER = [
-  { code: 0, label: "Kapalı" },
-  { code: 1, label: "Az" },
-  { code: 2, label: "Orta" },
-  { code: 3, label: "Çok" },
+  { code: 0, label: tk("Kapalı") },
+  { code: 1, label: tk("Az") },
+  { code: 2, label: tk("Orta") },
+  { code: 3, label: tk("Çok") },
 ];
 
 /** Sarf malzemesi önerilen ömürleri (saat) — Roborock kılavuz değerleri */
@@ -64,7 +65,7 @@ export default function Vacuum({ conn, entities, registries, baseUrl }: Props) {
   const [selId, setSelId] = useState<string | null>(null);
   const vac = vacuums.find((v) => v.entity_id === selId) ?? vacuums[0];
 
-  if (!vac) return <div className="placeholder">Home Assistant'ta robot süpürge bulunamadı.</div>;
+  if (!vac) return <div className="placeholder">{t("Home Assistant'ta robot süpürge bulunamadı.")}</div>;
   return (
     <>
       {vacuums.length > 1 && (
@@ -113,10 +114,10 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
       volume: find(/_ses$|volume/, "number"),
       emptyBin: find(/cop|dustbin|empty/, "button"),
       consumables: [
-        { key: "main_brush", label: "Ana fırça", e: find(/ana_firca|main_brush/, "sensor") },
-        { key: "side_brush", label: "Yan fırça", e: find(/yan_firca|side_brush/, "sensor") },
-        { key: "filter", label: "Filtre", e: find(/filtre|filter/, "sensor") },
-        { key: "sensor", label: "Sensörler", e: find(/sensor_suresi|sensor_life/, "sensor") },
+        { key: "main_brush", label: tk("Ana fırça"), e: find(/ana_firca|main_brush/, "sensor") },
+        { key: "side_brush", label: tk("Yan fırça"), e: find(/yan_firca|side_brush/, "sensor") },
+        { key: "filter", label: tk("Filtre"), e: find(/filtre|filter/, "sensor") },
+        { key: "sensor", label: tk("Sensörler"), e: find(/sensor_suresi|sensor_life/, "sensor") },
       ],
       switches: ids
         .filter((id) => id.startsWith("switch.") && entities[id] && entities[id].state !== "unknown")
@@ -142,7 +143,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
       await fn();
       if (ok) setMsg(ok);
     } catch (e) {
-      setMsg(`Hata: ${(e as { message?: string })?.message ?? String(e)}`);
+      setMsg(`${t("Hata")}: ${(e as { message?: string })?.message ?? String(e)}`);
     } finally {
       setBusy(null);
     }
@@ -180,11 +181,11 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
         <div>
           <h2>{(vac.attributes.friendly_name as string) || vac.entity_id}</h2>
           <span className={`vac-status ${cleaning ? "active" : ""} ${status === "error" ? "err" : ""}`}>
-            {STATUS_TR[status] ?? status}
+            {STATUS_TR[status] ? t(STATUS_TR[status]) : status}
           </span>
         </div>
         {!Number.isNaN(battery) && (
-          <div className="vac-battery" title="Pil">
+          <div className="vac-battery" title={t("Pil")}>
             <div className="batt">
               <div style={{ width: `${battery}%` }} className={battery < 20 ? "low" : ""} />
             </div>
@@ -197,9 +198,9 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
         {/* ---------- Harita ---------- */}
         <section className="vac-map">
           {mapUrl ? (
-            <img src={mapUrl} alt="Süpürge haritası" />
+            <img src={mapUrl} alt={t("Süpürge haritası")} />
           ) : (
-            <div className="placeholder">Harita görüntüsü yok</div>
+            <div className="placeholder">{t("Harita görüntüsü yok")}</div>
           )}
           {cleaning && !Number.isNaN(progress) && (
             <div className="vac-progress">
@@ -218,29 +219,29 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
           <div className="vac-controls">
             {cleaning ? (
               <button className="btn-primary" disabled={!!busy} onClick={() => run("pause", () => svc("pause"))}>
-                ⏸ Duraklat
+                ⏸ {t("Duraklat")}
               </button>
             ) : (
-              <button className="btn-primary" disabled={!!busy} onClick={() => run("start", start, rooms.length ? "Seçili odalar temizleniyor" : "Temizlik başladı")}>
-                ▶ {paused ? "Devam et" : rooms.length ? `${rooms.length} odayı temizle` : "Tüm evi temizle"}
+              <button className="btn-primary" disabled={!!busy} onClick={() => run("start", start, rooms.length ? t("Seçili odalar temizleniyor") : t("Temizlik başladı"))}>
+                ▶ {paused ? t("Devam et") : rooms.length ? t("{n} odayı temizle", { n: rooms.length }) : t("Tüm evi temizle")}
               </button>
             )}
-            <button className="btn-small" disabled={!!busy} onClick={() => run("stop", () => svc("stop"))}>⏹ Durdur</button>
-            <button className="btn-small" disabled={!!busy} onClick={() => run("home", () => svc("return_to_base"), "İstasyona dönüyor")}>⌂ İstasyona dön</button>
-            <button className="btn-small" disabled={!!busy} onClick={() => run("locate", () => svc("locate"), "Süpürge ses çıkarıyor")}>🔊 Bul</button>
+            <button className="btn-small" disabled={!!busy} onClick={() => run("stop", () => svc("stop"))}>⏹ {t("Durdur")}</button>
+            <button className="btn-small" disabled={!!busy} onClick={() => run("home", () => svc("return_to_base"), t("İstasyona dönüyor"))}>{t("⌂ İstasyona dön")}</button>
+            <button className="btn-small" disabled={!!busy} onClick={() => run("locate", () => svc("locate"), t("Süpürge ses çıkarıyor"))}>🔊 {t("Bul")}</button>
             {rel.emptyBin && (
-              <button className="btn-small" disabled={!!busy} onClick={() => run("empty", () => callService(conn, "button", "press", {}, { entity_id: rel.emptyBin!.entity_id }), "Çöp kutusu boşaltılıyor")}>
-                🗑 Çöpü boşalt
+              <button className="btn-small" disabled={!!busy} onClick={() => run("empty", () => callService(conn, "button", "press", {}, { entity_id: rel.emptyBin!.entity_id }), t("Çöp kutusu boşaltılıyor"))}>
+                🗑 {t("Çöpü boşalt")}
               </button>
             )}
           </div>
 
           <div className="vac-setting">
-            <h4>Emiş gücü</h4>
+            <h4>{t("Emiş gücü")}</h4>
             <div className="seg">
               {fanList.map((f) => (
                 <button key={f} className={f === fan ? "active" : ""} disabled={!!busy} onClick={() => run("fan", () => svc("set_fan_speed", { fan_speed: f }))}>
-                  {FAN_TR[f] ?? f}
+                  {FAN_TR[f] ? t(FAN_TR[f]) : f}
                 </button>
               ))}
             </div>
@@ -248,7 +249,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
 
           {rel.mode && (
             <div className="vac-setting">
-              <h4>Temizleme modu</h4>
+              <h4>{t("Temizleme modu")}</h4>
               <div className="seg">
                 {modeOptions.map((m) => (
                   <button
@@ -257,7 +258,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
                     disabled={!!busy}
                     onClick={() => run("mode", () => callService(conn, "select", "select_option", { option: m }, { entity_id: rel.mode!.entity_id }))}
                   >
-                    {MODE_TR[m] ?? m}
+                    {MODE_TR[m] ? t(MODE_TR[m]) : m}
                   </button>
                 ))}
               </div>
@@ -266,7 +267,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
 
           <div className="vac-setting">
             <h4>
-              Islaklık <span className="exp" title="Bu model için HA'da hazır ayar yok; komut doğrudan cihaza gönderilir. Etkisi HA'da görünmez.">deneysel</span>
+              {t("Islaklık")} <span className="exp" title={t("Bu model için HA'da hazır ayar yok; komut doğrudan cihaza gönderilir. Etkisi HA'da görünmez.")}>{t("deneysel")}</span>
             </h4>
             <div className="seg">
               {WATER.map((w) => (
@@ -277,9 +278,9 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
                   onClick={() => run("water", async () => {
                     await sendDp("dpWaterLevel", w.code);
                     setPrefs((p) => ({ ...p, water: w.code }));
-                  }, `Islaklık: ${w.label} gönderildi`)}
+                  }, t("Islaklık: {x} gönderildi", { x: t(w.label) }))}
                 >
-                  {w.label}
+                  {t(w.label)}
                 </button>
               ))}
             </div>
@@ -287,7 +288,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
 
           <div className="vac-setting">
             <h4>
-              Geçiş sayısı <span className="exp" title="Temizlik başlatılırken cihaza gönderilir. Etkisi HA'da görünmez.">deneysel</span>
+              {t("Geçiş sayısı")} <span className="exp" title={t("Temizlik başlatılırken cihaza gönderilir. Etkisi HA'da görünmez.")}>{t("deneysel")}</span>
             </h4>
             <div className="seg">
               {([1, 2] as const).map((n) => (
@@ -298,9 +299,9 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
                   onClick={() => run("passes", async () => {
                     await sendDp("dpCleanCount", n);
                     setPrefs((p) => ({ ...p, passes: n }));
-                  }, n === 2 ? "Çift geçiş seçildi" : "Tek geçiş seçildi")}
+                  }, n === 2 ? t("Çift geçiş seçildi") : t("Tek geçiş seçildi"))}
                 >
-                  {n === 1 ? "Tek geçiş" : "Çift geçiş"}
+                  {n === 1 ? t("Tek geçiş") : t("Çift geçiş")}
                 </button>
               ))}
             </div>
@@ -308,7 +309,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
 
           <div className="vac-setting">
             <h4>
-              Odalar <span className="muted small">(boş = tüm ev)</span>
+              Odalar <span className="muted small">{t("(boş = tüm ev)")}</span>
             </h4>
             <div className="room-grid">
               {areas.map((a) => {
@@ -336,7 +337,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
       {/* ---------- Alt bilgiler ---------- */}
       <div className="vac-bottom">
         <section className="channel">
-          <h4>Sarf malzemeleri</h4>
+          <h4>{t("Sarf malzemeleri")}</h4>
           {rel.consumables.filter((c) => c.e).map((c) => {
             const used = Number(c.e!.state);
             const life = LIFE_H[c.key];
@@ -344,10 +345,10 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
             const pct = Math.min(100, (used / life) * 100);
             return (
               <div key={c.key} className="bar-row">
-                <span className="bar-name">{c.label}</span>
+                <span className="bar-name">{t(c.label)}</span>
                 <div className="bar"><div className={pct > 85 ? "warn" : ""} style={{ width: `${pct}%` }} /></div>
-                <span className="bar-val" title={`${used} sa kullanıldı / önerilen ${life} sa`}>
-                  {left > 0 ? `${Math.round(left)} sa kaldı` : "Değiştir"}
+                <span className="bar-val" title={t("{used} sa kullanıldı / önerilen {life} sa", { used, life })}>
+                  {left > 0 ? t("{n} sa kaldı", { n: Math.round(left) }) : t("Değiştir")}
                 </span>
               </div>
             );
@@ -355,7 +356,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
         </section>
 
         <section className="channel">
-          <h4>Ayarlar</h4>
+          <h4>{t("Ayarlar")}</h4>
           {rel.switches.map((s) => (
             <div key={s.entity_id} className="detail-row">
               <span className="detail-text">
@@ -366,7 +367,7 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
           ))}
           {rel.volume && (
             <div className="detail-row">
-              <span className="detail-text"><span className="detail-name">Ses</span></span>
+              <span className="detail-text"><span className="detail-name">{t("Ses")}</span></span>
               <input
                 type="range"
                 min={Number(rel.volume.attributes.min ?? 0)}
@@ -381,12 +382,12 @@ function VacuumPanel({ vac, conn, entities, registries, baseUrl }: { vac: HassEn
         </section>
 
         <section className="channel">
-          <h4>İstatistik</h4>
+          <h4>{t("İstatistik")}</h4>
           {[
-            ["Son temizlik", rel.cleanArea && rel.cleanTime ? `${formatState(rel.cleanArea)} · ${formatState(rel.cleanTime)}` : "—"],
-            ["Toplam temizlik", rel.totalCount ? `${rel.totalCount.state} kez` : "—"],
-            ["Toplam alan", rel.totalArea ? formatState(rel.totalArea) : "—"],
-            ["Toplam süre", rel.totalTime ? formatState(rel.totalTime) : "—"],
+            [t("Son temizlik"), rel.cleanArea && rel.cleanTime ? `${formatState(rel.cleanArea)} · ${formatState(rel.cleanTime)}` : "—"],
+            [t("Toplam temizlik"), rel.totalCount ? `${rel.totalCount.state} kez` : "—"],
+            [t("Toplam alan"), rel.totalArea ? formatState(rel.totalArea) : "—"],
+            [t("Toplam süre"), rel.totalTime ? formatState(rel.totalTime) : "—"],
           ].map(([k, v]) => (
             <div key={k} className="detail-row">
               <span className="detail-text"><span className="detail-name">{k}</span></span>

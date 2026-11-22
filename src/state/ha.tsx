@@ -6,6 +6,7 @@ import type { DeviceItem } from "../ha/devices";
 import { domainOf, friendly } from "../ha/devices";
 import type { HaSettings } from "../ha/settings";
 import { useToast } from "./toast";
+import { t, tk } from "../i18n";
 
 export type ConnStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
 
@@ -65,9 +66,10 @@ interface PendingInfo {
 const VERIFY_TIMEOUT_MS = 8000;
 
 const STATE_WORD: Record<string, string> = {
-  on: "açıldı", off: "kapatıldı", locked: "kilitlendi", unlocked: "kilidi açıldı", open: "açıldı",
-  closed: "kapatıldı", opening: "açılıyor", closing: "kapanıyor", playing: "oynatılıyor", paused: "duraklatıldı",
-  cleaning: "temizliğe başladı", returning: "istasyona dönüyor", docked: "istasyonda",
+  on: tk("{label} açıldı."), off: tk("{label} kapatıldı."), locked: tk("{label} kilitlendi."), unlocked: tk("{label} kilidi açıldı."),
+  open: tk("{label} açıldı."), closed: tk("{label} kapatıldı."), opening: tk("{label} açılıyor."), closing: tk("{label} kapanıyor."),
+  playing: tk("{label} oynatılıyor."), paused: tk("{label} duraklatıldı."), cleaning: tk("{label} temizliğe başladı."),
+  returning: tk("{label} istasyona dönüyor."), docked: tk("{label} istasyonda."),
 };
 
 export function useCommandTracker(entities: HassEntities, conn: Connection | null, connected: boolean): CommandTracker {
@@ -108,7 +110,7 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
       if (e.state !== p.prevState || e.last_updated !== p.prevUpdated) {
         finish(id);
         if (e.state === "unavailable") {
-          notify("error", `${p.label}: cihaza ulaşılamıyor.`);
+          notify("error", t("{label}: cihaza ulaşılamıyor.", { label: p.label }));
           markFailed(id);
         } else if (!p.silent) {
           const d = domainOf(id);
@@ -116,12 +118,10 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
           notify(
             "success",
             d === "scene"
-              ? `${p.label} sahnesi çalıştırıldı.`
+              ? t("{label} sahnesi çalıştırıldı.", { label: p.label })
               : d === "script" || d === "button"
-                ? `${p.label} çalıştırıldı.`
-                : word
-                  ? `${p.label} ${word}.`
-                  : `${p.label}: komut uygulandı.`,
+                ? t("{label} çalıştırıldı.", { label: p.label })
+                : t(word ?? tk("{label}: komut uygulandı."), { label: p.label }),
           );
         }
       }
@@ -130,17 +130,17 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
 
   // Zaman aşımı denetimi
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       const now = Date.now();
       for (const [id, p] of info.current) {
         if (now - p.startedAt > VERIFY_TIMEOUT_MS) {
           finish(id);
-          notify("warning", `${p.label}: komut gönderildi ama cihaz durumu değişmedi.`);
+          notify("warning", t("{label}: komut gönderildi ama cihaz durumu değişmedi.", { label: p.label }));
           markFailed(id);
         }
       }
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [finish, markFailed, notify]);
 
   const call = useCallback<CommandTracker["call"]>(
@@ -148,7 +148,7 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
       const id = e.entity_id;
       const label = opts?.label ?? friendly(e);
       if (!conn || !connected) {
-        notify("error", "Home Assistant bağlantısı yok; komut gönderilemedi.", { key: "cmd-offline", cooldownMs: 5000 });
+        notify("error", t("Home Assistant bağlantısı yok; komut gönderilemedi."), { key: "cmd-offline", cooldownMs: 5000 });
         return;
       }
       if (info.current.has(id)) return; // aynı cihaza üst üste komut gönderme
@@ -166,7 +166,7 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
       } catch (err) {
         finish(id);
         markFailed(id);
-        notify("error", `${label}: ${(err as { message?: string })?.message ?? "komut başarısız"}`);
+        notify("error", `${label}: ${(err as { message?: string })?.message ?? t("komut başarısız")}`);
       }
     },
     [conn, connected, finish, markFailed, notify],
@@ -179,7 +179,7 @@ export function useCommandTracker(entities: HassEntities, conn: Connection | nul
       return call(
         e,
         () => {
-          if (!conn) throw new Error("Bağlantı yok");
+          if (!conn) throw new Error(t("Bağlantı yok"));
           if (d === "lock") return lockAction(conn, id, e.state === "locked");
           if (["button", "input_button", "script", "scene"].includes(d)) return pressButton(conn, id);
           return toggle(conn, id, e.state);

@@ -8,6 +8,7 @@ import {
 } from "../ha/automations";
 import { formatState } from "../ha/devices";
 import Toggle from "./Toggle";
+import { locale, t } from "../i18n";
 
 interface Props {
   conn: Connection;
@@ -50,7 +51,7 @@ function discover(entities: HassEntities, reg: Registries): Sensor[] {
     out.push({
       entity: e,
       name: ((e.attributes.friendly_name as string) || e.entity_id).replace(/ (Varlık|Occupancy|Motion)$/i, ""),
-      area: (areaId && areaName.get(areaId)) || "Odasız",
+      area: (areaId && areaName.get(areaId)) || t("Odasız"),
       lux: sib((x) => x.attributes.device_class === "illuminance"),
       battery: sib((x) => x.entity_id.startsWith("sensor.") && x.attributes.device_class === "battery"),
       batteryLow: sib((x) => x.entity_id.startsWith("binary_sensor.") && x.attributes.device_class === "battery"),
@@ -127,12 +128,12 @@ function buildRule(s: Sensor, rule: Rule, names: (id: string) => string): Automa
   }
   if (rule.timeWindow) conditions.push({ condition: "time", after: `${rule.after}:00`, before: `${rule.before}:00` });
 
-  const darkText = rule.darkOnly ? (s.lux ? ` (ışık ${rule.luxBelow} lx altındaysa)` : " (güneş battıysa)") : "";
-  const timeText = rule.timeWindow ? ` ${rule.after}–${rule.before} arası` : "";
+  const darkText = rule.darkOnly ? (s.lux ? " " + t("(ışık {n} lx altındaysa)", { n: rule.luxBelow }) : t(" (güneş battıysa)")) : "";
+  const timeText = rule.timeWindow ? " " + t("{from}–{to} arası", { from: rule.after, to: rule.before }) : "";
   return {
     id: ruleId(s.entity.entity_id),
     alias: `Hareket – ${s.name} → ${names(rule.target)} (Ev Kontrol)`,
-    description: `Ev Kontrol Hareket Sensörleri sayfasında oluşturuldu. Hareket algılanınca${timeText}${darkText} ${names(rule.target)} açılır; ${rule.minutes} dk hareket olmazsa kapanır.`,
+    description: t("Ev Kontrol Hareket Sensörleri sayfasında oluşturuldu. Hareket algılanınca{time}{dark} {target} açılır; {n} dk hareket olmazsa kapanır.", { time: timeText, dark: darkText, target: names(rule.target), n: rule.minutes }),
     mode: "restart",
     variables: { [MARKER]: { ...rule } },
     triggers: [{ trigger: "state", entity_id: s.entity.entity_id, to: "on" }],
@@ -190,7 +191,7 @@ export default function Motion({ conn, entities, registries, baseUrl, token }: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conn, autoKey, reload]);
 
-  if (sensors.length === 0) return <div className="placeholder">Hareket sensörü bulunamadı.</div>;
+  if (sensors.length === 0) return <div className="placeholder">{t("Hareket sensörü bulunamadı.")}</div>;
 
   return (
     <div className="motion-page">
@@ -268,38 +269,38 @@ function SensorCard({ s, conn, entities, periods, autos, configs, baseUrl, token
           <span className="muted small">{s.area}</span>
         </div>
         <div className="motion-state">
-          <b>{unavailable ? "Erişilemiyor" : on ? "Hareket var" : "Sakin"}</b>
-          <span className="muted small">{unavailable ? "" : `${on ? "başladı" : "son hareket"}: ${relTime(lastChanged)}`}</span>
+          <b>{unavailable ? t("Erişilemiyor") : on ? t("Hareket var") : t("Sakin")}</b>
+          <span className="muted small">{unavailable ? "" : `${on ? t("başladı") : t("son hareket")}: ${relTime(lastChanged)}`}</span>
         </div>
       </header>
 
       <div className="motion-chips">
         {s.lux && <span className="chip">☀ {formatState(s.lux)}</span>}
         {s.battery && <span className="chip">🔋 {formatState(s.battery)}</span>}
-        {s.batteryLow && <span className={`chip ${s.batteryLow.state === "on" ? "warn" : ""}`}>🔋 {s.batteryLow.state === "on" ? "Pil zayıf" : "Pil iyi"}</span>}
-        <span className="chip">Son 24 saatte {count} hareket</span>
+        {s.batteryLow && <span className={`chip ${s.batteryLow.state === "on" ? "warn" : ""}`}>🔋 {s.batteryLow.state === "on" ? t("Pil zayıf") : t("Pil iyi")}</span>}
+        <span className="chip">{t("Son 24 saatte {n} hareket", { n: count })}</span>
       </div>
 
       {/* 24 saatlik zaman çizelgesi */}
-      <div className="timeline" title="Son 24 saat">
+      <div className="timeline" title={t("Son 24 saat")}>
         {periods.map((p, i) => (
           <div
             key={i}
             className="tl-on"
             style={{ left: `${((p.from - dayStart) / DAY_MS) * 100}%`, width: `max(2px, ${((p.to - p.from) / DAY_MS) * 100}%)` }}
-            title={`${new Date(p.from).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} – ${new Date(p.to).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`}
+            title={`${new Date(p.from).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })} – ${new Date(p.to).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })}`}
           />
         ))}
       </div>
       <div className="tl-axis">
         {[24, 18, 12, 6, 0].map((h) => (
-          <span key={h}>{h === 0 ? "şimdi" : new Date(now - h * 3600_000).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span key={h}>{h === 0 ? t("şimdi") : new Date(now - h * 3600_000).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })}</span>
         ))}
       </div>
 
       {(related.length > 0 || managed) && (
         <div className="motion-autos">
-          <h4>Bu sensörü kullanan otomasyonlar</h4>
+          <h4>{t("Bu sensörü kullanan otomasyonlar")}</h4>
           {[...(managed ? [managed] : []), ...related].map((a) => (
             <div key={a.entityId} className="other-auto">
               <Toggle on={a.enabled} onChange={() => setEnabled(conn, a.entityId, !a.enabled)} />
@@ -324,9 +325,9 @@ function SensorCard({ s, conn, entities, periods, autos, configs, baseUrl, token
               </label>
             ) : (
               <span key={h.entity_id} className="helper">
-                ⏱ {names(h.entity_id)}: {h.state === "active" ? `çalışıyor (${String(h.attributes.finishes_at ? new Date(h.attributes.finishes_at as string).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) + "'de biter" : h.attributes.remaining)})` : h.state === "paused" ? "duraklatıldı" : `boşta (${h.attributes.duration})`}
+                ⏱ {names(h.entity_id)}: {h.state === "active" ? t("çalışıyor ({x})", { x: h.attributes.finishes_at ? t("{time}'de biter", { time: new Date(h.attributes.finishes_at as string).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" }) }) : String(h.attributes.remaining) }) : h.state === "paused" ? t("duraklatıldı") : t("boşta ({x})", { x: String(h.attributes.duration) })}
                 {h.state === "active" && (
-                  <button className="btn-small ghost" onClick={() => callService(conn, "timer", "cancel", {}, { entity_id: h.entity_id })}>iptal</button>
+                  <button className="btn-small ghost" onClick={() => callService(conn, "timer", "cancel", {}, { entity_id: h.entity_id })}>{t("iptal")}</button>
                 )}
               </span>
             ),
@@ -336,9 +337,9 @@ function SensorCard({ s, conn, entities, periods, autos, configs, baseUrl, token
 
       <div className="motion-foot">
         <button className="btn-small" onClick={() => setRuleOpen((o) => !o)}>
-          {ruleOpen ? "Kapat" : managed ? "✎ Hareketle ışık kuralını düzenle" : "+ Hareketle ışık kuralı ekle"}
+          {ruleOpen ? t("Kapat|pencere") : managed ? t("✎ Hareketle ışık kuralını düzenle") : t("+ Hareketle ışık kuralı ekle")}
         </button>
-        {msg && <span className={msg.startsWith("Hata") ? "error-text" : "ok-text"}>{msg}</span>}
+        {msg && <span className={msg.startsWith(t("Hata")) ? "error-text" : "ok-text"}>{msg}</span>}
       </div>
 
       {ruleOpen && (
@@ -351,21 +352,21 @@ function SensorCard({ s, conn, entities, periods, autos, configs, baseUrl, token
           onSave={async (rule) => {
             try {
               await saveAutomation(baseUrl, token, buildRule(s, rule, names));
-              setMsg("Kural kaydedildi");
+              setMsg(t("Kural kaydedildi"));
               setRuleOpen(false);
               onChanged();
             } catch (e) {
-              setMsg(`Hata: ${(e as Error).message}`);
+              setMsg(`${t("Hata")}: ${(e as Error).message}`);
             }
           }}
           onDelete={async () => {
             try {
               await deleteAutomation(baseUrl, token, managedId);
-              setMsg("Kural silindi");
+              setMsg(t("Kural silindi"));
               setRuleOpen(false);
               onChanged();
             } catch (e) {
-              setMsg(`Hata: ${(e as Error).message}`);
+              setMsg(`${t("Hata")}: ${(e as Error).message}`);
             }
           }}
         />
@@ -399,9 +400,9 @@ function RuleForm({
   return (
     <div className="rule-form">
       <label>
-        Ne açılsın
+        {t("Ne açılsın")}
         <select value={rule.target} onChange={(e) => set({ target: e.target.value })} className={!rule.target ? "needs" : ""}>
-          <option value="">Cihaz seç…</option>
+          <option value="">{t("Cihaz seç…")}</option>
           {targets.map((t) => (
             <option key={t.entity_id} value={t.entity_id}>
               {names(t.entity_id)}
@@ -410,26 +411,26 @@ function RuleForm({
         </select>
       </label>
       <label>
-        Hareket bitince kaç dakika sonra kapansın
+        {t("Hareket bitince kaç dakika sonra kapansın")}
         <input type="number" min={1} max={120} value={rule.minutes} onChange={(e) => set({ minutes: Math.max(1, Number(e.target.value) || 1) })} />
       </label>
       <label className="check">
         <input type="checkbox" checked={rule.darkOnly} onChange={(e) => set({ darkOnly: e.target.checked })} />
-        Sadece karanlıkta
+        {t("Sadece karanlıkta")}
         {rule.darkOnly &&
           (s.lux ? (
             <>
-              — ışık
+              — {t("ışık")}
               <input type="number" min={0} className="tiny" value={rule.luxBelow} onChange={(e) => set({ luxBelow: Number(e.target.value) || 0 })} />
-              lx altındaysa <span className="muted small">(şu an {formatState(s.lux)})</span>
+              {t("lx altındaysa")} <span className="muted small">({t("şu an {x}", { x: formatState(s.lux) })})</span>
             </>
           ) : (
-            <span className="muted small"> — güneş battıktan sonra</span>
+            <span className="muted small"> {t("— güneş battıktan sonra")}</span>
           ))}
       </label>
       <label className="check">
         <input type="checkbox" checked={rule.timeWindow} onChange={(e) => set({ timeWindow: e.target.checked })} />
-        Sadece şu saatlerde
+        {t("Sadece şu saatlerde")}
         {rule.timeWindow && (
           <>
             <input type="time" value={rule.after} onChange={(e) => set({ after: e.target.value })} />–
@@ -440,7 +441,7 @@ function RuleForm({
       <div className="rule-actions">
         {exists && (
           <button className="btn-small danger" disabled={busy} onClick={async () => { setBusy(true); await onDelete(); setBusy(false); }}>
-            Kuralı sil
+            {t("Kuralı sil")}
           </button>
         )}
         <span style={{ flex: 1 }} />
@@ -453,7 +454,7 @@ function RuleForm({
             setBusy(false);
           }}
         >
-          {busy ? "Kaydediliyor…" : "Kaydet"}
+          {busy ? t("Kaydediliyor…") : t("Kaydet")}
         </button>
       </div>
     </div>

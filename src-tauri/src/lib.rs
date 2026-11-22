@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager, State, WebviewWindow, WindowEvent};
+use tauri::{AppHandle, Manager, State, WebviewWindow, WindowEvent, Wry};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
@@ -45,6 +45,18 @@ fn token_delete() -> Result<(), String> {
 struct Behavior {
     close_to_tray: Mutex<bool>,
     hotkey: Mutex<Option<Shortcut>>,
+}
+
+/// Tepsi menüsü öğeleri (arayüz dili değişince metinleri güncellenir)
+struct TrayItems {
+    show: MenuItem<Wry>,
+    quit: MenuItem<Wry>,
+}
+
+#[tauri::command]
+fn set_tray_labels(items: State<TrayItems>, show: String, quit: String) -> Result<(), String> {
+    items.show.set_text(show).map_err(|e| e.to_string())?;
+    items.quit.set_text(quit).map_err(|e| e.to_string())
 }
 
 /// Gizliyken WebView2'yi "görünmez" işaretle (çizim ve zamanlayıcılar durur, sayfa
@@ -188,6 +200,7 @@ pub fn run() {
             set_hotkey,
             autostart_get,
             autostart_set,
+            set_tray_labels,
             pc::pc_command,
             pc::pc_name
         ])
@@ -213,6 +226,7 @@ pub fn run() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
+            app.manage(TrayItems { show, quit });
 
             if std::env::args().any(|a| a == HIDDEN_ARG) {
                 hide_main(app.handle());

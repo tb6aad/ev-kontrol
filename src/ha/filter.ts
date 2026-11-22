@@ -1,15 +1,16 @@
 // Cihaz arama + filtre (saf fonksiyon; arayüzden bağımsız, test edilebilir)
 import { ACTION_DOMAINS, DOMAIN_LABELS, DeviceItem, deviceIsOn, domainOf, friendly, isUnavailable } from "./devices";
+import { t, tk } from "../i18n";
 
 export type DeviceFilter = "all" | "on" | "off" | "controls" | "unavailable" | "favorites";
 
 export const FILTER_LABELS: Record<DeviceFilter, string> = {
-  all: "Tümü",
-  on: "Açık olanlar",
-  off: "Kapalı olanlar",
-  controls: "Kontrol edilebilir",
-  unavailable: "Erişilemeyenler",
-  favorites: "Favoriler",
+  all: tk("Tümü"),
+  on: tk("Açık olanlar"),
+  off: tk("Kapalı olanlar"),
+  controls: tk("Kontrol edilebilir"),
+  unavailable: tk("Erişilemeyenler"),
+  favorites: tk("Favoriler"),
 };
 
 const norm = (s: string) => s.toLocaleLowerCase("tr").normalize("NFC");
@@ -22,7 +23,7 @@ export function matchesQuery(d: DeviceItem, query: string): boolean {
     d.area,
     ...d.entities.map((e) => e.entity_id),
     ...d.entities.map((e) => friendly(e)),
-    ...d.entities.map((e) => DOMAIN_LABELS[domainOf(e.entity_id)] ?? domainOf(e.entity_id)),
+    ...d.entities.map((e) => t(DOMAIN_LABELS[domainOf(e.entity_id)] ?? domainOf(e.entity_id))),
   ];
   // Birden çok kelime → hepsi bir yerde geçmeli ("atölye lamba")
   return q.split(/\s+/).every((w) => hay.some((h) => norm(h).includes(w)));
@@ -72,5 +73,5 @@ export function groupByArea(list: DeviceItem[]) {
   }
   return [...g.entries()]
     .map(([area, items]) => [area, sortDevices(items)] as const)
-    .sort(([a], [b]) => (a === "Odasız" ? 1 : b === "Odasız" ? -1 : a.localeCompare(b, "tr")));
+    .sort(([a], [b]) => (a === t("Odasız") ? 1 : b === t("Odasız") ? -1 : a.localeCompare(b, "tr")));
 }

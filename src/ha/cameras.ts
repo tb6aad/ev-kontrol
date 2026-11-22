@@ -2,6 +2,7 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import type { Registries } from "./client";
 import { friendly } from "./devices";
+import { t } from "../i18n";
 
 export interface CameraStream {
   entity: HassEntity;
@@ -47,7 +48,7 @@ export function discoverCameras(entities: HassEntities, reg: Registries): Camera
       groups.set(key, {
         key,
         name: cleanName(dev?.name_by_user || friendly(e)),
-        area: (areaId && areaName.get(areaId)) || "Odasız",
+        area: (areaId && areaName.get(areaId)) || t("Odasız"),
         streams: [],
         privacy: siblings.find((x) => x.entity_id.startsWith("switch.") && /privacy|gizlilik/.test(x.entity_id)),
         motion: siblings.find((x) => x.entity_id.startsWith("binary_sensor.") && x.attributes.device_class === "motion"),

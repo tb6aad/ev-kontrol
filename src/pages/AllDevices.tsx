@@ -4,6 +4,7 @@ import { usePrefs } from "../state/prefs";
 import { DeviceFilter, FILTER_LABELS, filterDevices, matchesFilter, sortDevices } from "../ha/filter";
 import DeviceCard, { EmptyState } from "../ui/DeviceCard";
 import Icon from "../ui/Icon";
+import { t } from "../i18n";
 
 const FILTERS: DeviceFilter[] = ["all", "on", "off", "controls", "unavailable", "favorites"];
 
@@ -28,21 +29,21 @@ export default function AllDevices({ onOpen }: { onOpen: (key: string) => void }
         <label className="search-box wide">
           <Icon name="search" size={16} />
           <input
-            placeholder="Ad, oda, varlık kimliği ya da tür ile ara…"
+            placeholder={t("Ad, oda, varlık kimliği ya da tür ile ara…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Cihaz ara"
+            aria-label={t("Cihaz ara")}
           />
           {query && (
-            <button className="icon-btn small" onClick={() => setQuery("")} aria-label="Aramayı temizle">
+            <button className="icon-btn small" onClick={() => setQuery("")} aria-label={t("Aramayı temizle")}>
               <Icon name="close" size={14} />
             </button>
           )}
         </label>
-        <div className="chips" role="tablist" aria-label="Filtre">
+        <div className="chips" role="tablist" aria-label={t("Filtre")}>
           {FILTERS.map((f) => (
             <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
-              {FILTER_LABELS[f]} <span className="chip-count">{counts[f]}</span>
+              {t(FILTER_LABELS[f])} <span className="chip-count">{counts[f]}</span>
             </button>
           ))}
         </div>
@@ -51,11 +52,11 @@ export default function AllDevices({ onOpen }: { onOpen: (key: string) => void }
       {list.length === 0 ? (
         <EmptyState
           icon={filter === "favorites" ? "star" : "search"}
-          title={filter === "favorites" && !query ? "Henüz favori yok" : "Eşleşen cihaz yok"}
+          title={filter === "favorites" && !query ? t("Henüz favori yok") : t("Eşleşen cihaz yok")}
           text={
             filter === "favorites" && !query
-              ? "Bir cihaz kartındaki yıldıza tıklayarak favorilere ekleyebilirsin."
-              : "Arama ifadesini ya da filtreyi değiştirmeyi dene."
+              ? t("Bir cihaz kartındaki yıldıza tıklayarak favorilere ekleyebilirsin.")
+              : t("Arama ifadesini ya da filtreyi değiştirmeyi dene.")
           }
         />
       ) : (

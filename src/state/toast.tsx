@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "../ui/Icon";
+import { t } from "../i18n";
 
 export type ToastKind = "success" | "error" | "warning" | "info";
 
@@ -68,11 +69,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={api}>
       {children}
       <div className="toasts" role="status" aria-live="polite">
-        {visible.map((t) => (
-          <div key={t.id} className={`toast2 ${t.kind}`}>
-            <Icon name={ICON[t.kind]} size={18} />
-            <span>{t.text}</span>
-            <button className="toast-x" onClick={() => dismiss(t.id)} aria-label="Kapat">
+        {visible.map((item) => (
+          <div key={item.id} className={`toast2 ${item.kind}`}>
+            <Icon name={ICON[item.kind]} size={18} />
+            <span>{item.text}</span>
+            <button className="toast-x" onClick={() => dismiss(item.id)} aria-label={t("Kapat|pencere")}>
               <Icon name="close" size={14} />
             </button>
           </div>

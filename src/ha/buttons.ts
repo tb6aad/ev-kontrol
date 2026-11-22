@@ -1,6 +1,7 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import type { Registries } from "./client";
 import type { AutomationConfig } from "./automations";
+import { t, tk } from "../i18n";
 
 /* ================= Keşif ================= */
 
@@ -33,25 +34,25 @@ export interface SmartButton {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  multi_press_1: "Tek bas",
-  multi_press_2: "Çift bas",
-  multi_press_3: "Üç kez bas",
-  multi_press_4: "Dört kez bas",
-  long_press: "Uzun bas",
-  single_click: "Tek tık",
-  single: "Tek tık",
-  double_click: "Çift tık",
-  double: "Çift tık",
-  triple_click: "Üç tık",
-  long_click: "Uzun bas",
-  hold: "Basılı tut",
-  press: "Bas",
+  multi_press_1: tk("Tek bas"),
+  multi_press_2: tk("Çift bas"),
+  multi_press_3: tk("Üç kez bas"),
+  multi_press_4: tk("Dört kez bas"),
+  long_press: tk("Uzun bas"),
+  single_click: tk("Tek tık"),
+  single: tk("Tek tık"),
+  double_click: tk("Çift tık"),
+  double: tk("Çift tık"),
+  triple_click: tk("Üç tık"),
+  long_click: tk("Uzun bas"),
+  hold: tk("Basılı tut"),
+  press: tk("Bas"),
 };
 
 /** Bu olay türleri ayrı bir eylem olarak gösterilmez. */
 const SKIP_TYPES = new Set(["long_release", "release", "short_release", "rotation_stop", "initial_press"]);
 
-const typeLabel = (t: string) => TYPE_LABELS[t] ?? t.replace(/_/g, " ");
+const typeLabel = (ty: string) => (TYPE_LABELS[ty] ? t(TYPE_LABELS[ty]) : ty.replace(/_/g, " "));
 
 function classify(e: HassEntity): SlotKind {
   const types = (e.attributes.event_types as string[]) ?? [];
@@ -100,7 +101,7 @@ export function discoverButtons(entities: HassEntities, reg: Registries): SmartB
         entityId: e.entity_id,
         eventType: "*",
         kind: "scroll",
-        label: arr.length === 2 ? (i === 0 ? "Sağa çevir" : "Sola çevir") : `Çevir (${i + 1})`,
+        label: arr.length === 2 ? (i === 0 ? t("Sağa çevir") : t("Sola çevir")) : t("Çevir ({n})", { n: i + 1 }),
         dir: i === 0 ? 1 : -1,
       }));
 
@@ -111,13 +112,13 @@ export function discoverButtons(entities: HassEntities, reg: Registries): SmartB
         pendingScroll.push(e);
       } else if (k === "dial") {
         channels.push({
-          label: "Çevirme",
-          slots: [{ key: `${e.entity_id}|*`, entityId: e.entity_id, eventType: "*", kind: "dial", label: "Çevir (sağ = artır, sol = azalt)" }],
+          label: t("Çevirme"),
+          slots: [{ key: `${e.entity_id}|*`, entityId: e.entity_id, eventType: "*", kind: "dial", label: t("Çevir (sağ = artır, sol = azalt)") }],
         });
       } else {
         const slots = [...scrollSlots(pendingScroll), ...pressSlots(e)];
         pendingScroll = [];
-        channels.push({ label: hasScroll ? `Kanal ${channels.length + 1}` : "Düğme", slots });
+        channels.push({ label: hasScroll ? t("Kanal {n}", { n: channels.length + 1 }) : t("Düğme"), slots });
       }
     }
     if (pendingScroll.length) channels.push({ label: `Kanal ${channels.length + 1}`, slots: scrollSlots(pendingScroll) });
@@ -135,7 +136,7 @@ export function discoverButtons(entities: HassEntities, reg: Registries): SmartB
       deviceId: devId,
       name: dev?.name_by_user || dev?.name || list[0].entity_id,
       model: dev?.model ?? "",
-      area: (areaId && areaName.get(areaId)) || "Odasız",
+      area: (areaId && areaName.get(areaId)) || t("Odasız"),
       entityIds: list.map((e) => e.entity_id),
       channels,
       battery,
@@ -225,7 +226,7 @@ function turnSequence(slot: Slot, a: Assignment) {
   return [{ action: "light.turn_on", target: { entity_id: a.target }, data: { brightness_step_pct: step } }];
 }
 
-const DESC_PRESS: Record<string, string> = { toggle: "aç/kapat", on: "aç", off: "kapat", run: "çalıştır" };
+const DESC_PRESS: Record<string, string> = { toggle: tk("aç/kapat"), on: tk("aç"), off: tk("kapat"), run: tk("çalıştır") };
 
 export function buildAutomation(
   btn: SmartButton,
@@ -252,8 +253,8 @@ export function buildAutomation(
       const a = mapping[s.key];
       const ch = btn.channels.find((c) => c.slots.includes(s));
       const prefix = ch && btn.channels.length > 1 ? `${ch.label} ` : "";
-      if (a.action === "custom") return `${prefix}${s.label.toLocaleLowerCase("tr")} = ${a.label ?? "özel eylem"}`;
-      const verb = a.action === "brightness" ? "parlaklık" : a.action === "volume" ? "ses" : DESC_PRESS[a.action];
+      if (a.action === "custom") return `${prefix}${s.label.toLocaleLowerCase("tr")} = ${a.label ?? t("özel eylem")}`;
+      const verb = a.action === "brightness" ? t("parlaklık") : a.action === "volume" ? t("ses") : t(DESC_PRESS[a.action]);
       return `${prefix}${s.label.toLocaleLowerCase("tr")} = ${names(a.target)} ${verb}`;
     })
     .join("; ");
@@ -268,8 +269,8 @@ export function buildAutomation(
 
   return {
     id: automationIdFor(btn.deviceId),
-    alias: `Düğme – ${btn.name} (Ev Kontrol)`,
-    description: `Ev Kontrol uygulamasının Akıllı Düğmeler sayfasında oluşturuldu. ${summary || "Atama yok."}`,
+    alias: `${t("Düğme")} – ${btn.name} (Ev Kontrol)`,
+    description: `${t("Ev Kontrol uygulamasının Akıllı Düğmeler sayfasında oluşturuldu.")} ${summary || t("Atama yok.")}`,
     mode: "queued",
     max: 20,
     max_exceeded: "silent",
@@ -359,10 +360,10 @@ const targetOf = (call: any): string => {
 };
 
 const DATA_HINTS: [string[], string][] = [
-  [["hs_color", "rgb_color", "xy_color", "rgbw_color"], "renk değiştir"],
-  [["color_temp_kelvin", "color_temp", "kelvin"], "beyaz tonu"],
-  [["effect"], "efekt"],
-  [["brightness_pct", "brightness", "brightness_step_pct"], "parlaklık"],
+  [["hs_color", "rgb_color", "xy_color", "rgbw_color"], tk("renk değiştir")],
+  [["color_temp_kelvin", "color_temp", "kelvin"], tk("beyaz tonu")],
+  [["effect"], tk("efekt")],
+  [["brightness_pct", "brightness", "brightness_step_pct"], tk("parlaklık")],
 ];
 
 function customLabel(calls: any[], names: (id: string) => string) {
@@ -373,7 +374,7 @@ function customLabel(calls: any[], names: (id: string) => string) {
   const tgt = targetOf(c);
   const who = tgt ? names(tgt) : svc;
   const extra = calls.length > 1 ? ` +${calls.length - 1}` : "";
-  return `${who}: ${hint ?? svc.split(".")[1].replace(/_/g, " ")}${extra}`;
+  return `${who}: ${hint ? t(hint) : svc.split(".")[1].replace(/_/g, " ")}${extra}`;
 }
 
 function classifyEffect(slot: Slot, seq: any[], prelude: any[], names: (id: string) => string): Assignment | null {
@@ -474,7 +475,7 @@ export function deriveMapping(
       }
 
       if (targets.length === 0) {
-        const desc = customLabel(calls, names) + (br.ctx.count != null ? ` (${br.ctx.count} tık)` : "");
+        const desc = customLabel(calls, names) + (br.ctx.count != null ? ` (${t("{n} tık", { n: br.ctx.count })})` : "");
         (result.unmapped[a.name] ??= []).push(desc);
         continue;
       }

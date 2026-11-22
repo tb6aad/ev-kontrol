@@ -3,6 +3,7 @@ import type { Connection, HassEntities } from "home-assistant-js-websocket";
 import { parse, parseDocument, stringify, YAMLSeq, isSeq } from "yaml";
 import { AutomationConfig, asArray, saveAutomation } from "../ha/automations";
 import YamlEditor, { YamlEditorHandle } from "./YamlEditor";
+import { locale, t, tk } from "../i18n";
 
 interface Props {
   conn: Connection;
@@ -33,28 +34,28 @@ actions:
 
 type Section = "triggers" | "conditions" | "actions";
 const SNIPPETS: { section: Section; label: string; item: Record<string, unknown> }[] = [
-  { section: "triggers", label: "Saatte", item: { trigger: "time", at: "07:00:00" } },
-  { section: "triggers", label: "Durum değişince", item: { trigger: "state", entity_id: "", to: "on" } },
-  { section: "triggers", label: "Değer eşiği geçince", item: { trigger: "numeric_state", entity_id: "", above: 25 } },
-  { section: "triggers", label: "Gün batımı / doğumu", item: { trigger: "sun", event: "sunset", offset: "-00:15:00" } },
-  { section: "triggers", label: "Periyodik", item: { trigger: "time_pattern", minutes: "/15" } },
-  { section: "triggers", label: "HA açılınca", item: { trigger: "homeassistant", event: "start" } },
-  { section: "conditions", label: "Durum şu ise", item: { condition: "state", entity_id: "", state: "on" } },
-  { section: "conditions", label: "Saat aralığı", item: { condition: "time", after: "22:00:00", before: "07:00:00" } },
-  { section: "conditions", label: "Hafta içi", item: { condition: "time", weekday: ["mon", "tue", "wed", "thu", "fri"] } },
-  { section: "conditions", label: "Güneş battıysa", item: { condition: "sun", after: "sunset" } },
-  { section: "conditions", label: "Değer aralığı", item: { condition: "numeric_state", entity_id: "", below: 20 } },
-  { section: "actions", label: "Aç", item: { action: "homeassistant.turn_on", target: { entity_id: "" } } },
-  { section: "actions", label: "Kapat", item: { action: "homeassistant.turn_off", target: { entity_id: "" } } },
-  { section: "actions", label: "Aç / kapat", item: { action: "homeassistant.toggle", target: { entity_id: "" } } },
-  { section: "actions", label: "Işık parlaklığı", item: { action: "light.turn_on", target: { entity_id: "" }, data: { brightness_pct: 50 } } },
-  { section: "actions", label: "Bekle", item: { delay: "00:05:00" } },
-  { section: "actions", label: "Sahne çalıştır", item: { action: "scene.turn_on", target: { entity_id: "" } } },
-  { section: "actions", label: "Bildirim gönder", item: { action: "notify.notify", data: { message: "Mesaj" } } },
-  { section: "actions", label: "Eğer / değilse", item: { if: [{ condition: "state", entity_id: "", state: "on" }], then: [], else: [] } },
+  { section: "triggers", label: tk("Saatte"), item: { trigger: "time", at: "07:00:00" } },
+  { section: "triggers", label: tk("Durum değişince"), item: { trigger: "state", entity_id: "", to: "on" } },
+  { section: "triggers", label: tk("Değer eşiği geçince"), item: { trigger: "numeric_state", entity_id: "", above: 25 } },
+  { section: "triggers", label: tk("Gün batımı / doğumu"), item: { trigger: "sun", event: "sunset", offset: "-00:15:00" } },
+  { section: "triggers", label: tk("Periyodik"), item: { trigger: "time_pattern", minutes: "/15" } },
+  { section: "triggers", label: tk("HA açılınca"), item: { trigger: "homeassistant", event: "start" } },
+  { section: "conditions", label: tk("Durum şu ise"), item: { condition: "state", entity_id: "", state: "on" } },
+  { section: "conditions", label: tk("Saat aralığı"), item: { condition: "time", after: "22:00:00", before: "07:00:00" } },
+  { section: "conditions", label: tk("Hafta içi"), item: { condition: "time", weekday: ["mon", "tue", "wed", "thu", "fri"] } },
+  { section: "conditions", label: tk("Güneş battıysa"), item: { condition: "sun", after: "sunset" } },
+  { section: "conditions", label: tk("Değer aralığı"), item: { condition: "numeric_state", entity_id: "", below: 20 } },
+  { section: "actions", label: tk("Aç"), item: { action: "homeassistant.turn_on", target: { entity_id: "" } } },
+  { section: "actions", label: tk("Kapat"), item: { action: "homeassistant.turn_off", target: { entity_id: "" } } },
+  { section: "actions", label: tk("Aç / kapat"), item: { action: "homeassistant.toggle", target: { entity_id: "" } } },
+  { section: "actions", label: tk("Işık parlaklığı"), item: { action: "light.turn_on", target: { entity_id: "" }, data: { brightness_pct: 50 } } },
+  { section: "actions", label: tk("Bekle"), item: { delay: "00:05:00" } },
+  { section: "actions", label: tk("Sahne çalıştır"), item: { action: "scene.turn_on", target: { entity_id: "" } } },
+  { section: "actions", label: tk("Bildirim gönder"), item: { action: "notify.notify", data: { message: tk("Mesaj") } } },
+  { section: "actions", label: tk("Eğer / değilse"), item: { if: [{ condition: "state", entity_id: "", state: "on" }], then: [], else: [] } },
 ];
 
-const SECTION_TR: Record<Section, string> = { triggers: "Tetikleyiciler", conditions: "Koşullar", actions: "Eylemler" };
+const SECTION_TR: Record<Section, string> = { triggers: tk("Tetikleyiciler"), conditions: tk("Koşullar"), actions: tk("Eylemler") };
 
 /* ---------- Sürüm geçmişi (yerel) ---------- */
 
@@ -116,16 +117,16 @@ function validate(text: string, entities: HassEntities): Validation {
   }
   const problems: string[] = [];
   if (!config || typeof config !== "object" || Array.isArray(config)) {
-    return { yamlError: "Belge bir otomasyon nesnesi olmalı (alias:, triggers:, actions: …)", yamlLine: 1, problems, unknownEntities: [], config: null };
+    return { yamlError: t("Belge bir otomasyon nesnesi olmalı (alias:, triggers:, actions: …)"), yamlLine: 1, problems, unknownEntities: [], config: null };
   }
-  if (!config.alias) problems.push("alias (isim) boş");
-  if (asArray(config.triggers ?? config.trigger).length === 0) problems.push("En az bir tetikleyici gerekli");
-  if (asArray(config.actions ?? config.action).length === 0) problems.push("En az bir eylem gerekli");
+  if (!config.alias) problems.push(t("alias (isim) boş"));
+  if (asArray(config.triggers ?? config.trigger).length === 0) problems.push(t("En az bir tetikleyici gerekli"));
+  if (asArray(config.actions ?? config.action).length === 0) problems.push(t("En az bir eylem gerekli"));
 
   const ids = new Set<string>();
   collectEntityIds(config, ids);
   const unknownEntities = [...ids].filter((id) => !entities[id]);
-  if ([...ids].some((id) => id.endsWith("."))) problems.push("Boş bırakılmış entity_id var");
+  if ([...ids].some((id) => id.endsWith("."))) problems.push(t("Boş bırakılmış entity_id var"));
   return { yamlError: null, yamlLine: null, problems, unknownEntities, config };
 }
 
@@ -135,11 +136,11 @@ type ServerCheck = Partial<Record<Section, { valid: boolean; error: string | nul
 
 export default function AutomationEditor({ conn, entities, baseUrl, token, initial, copy, onClose }: Props) {
   const startText = useMemo(() => {
-    if (!initial) return NEW_TEMPLATE;
+    if (!initial) return NEW_TEMPLATE.replace("alias: Yeni otomasyon", `alias: ${t("Yeni otomasyon")}`);
     const c = { ...initial };
     if (copy) {
       delete c.id;
-      c.alias = `${c.alias ?? "Otomasyon"} (kopya)`;
+      c.alias = `${c.alias ?? t("Otomasyon")} (${t("kopya")})`;
     }
     // id'yi kullanıcıya göstermeye gerek yok; kaydederken eklenir
     const { id: _omit, ...rest } = c; // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -182,7 +183,7 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
   const serverErrors = server
     ? (Object.entries(server) as [Section, { valid: boolean; error: string | null }][])
         .filter(([, r]) => r && !r.valid)
-        .map(([k, r]) => `${SECTION_TR[k]}: ${r.error}`)
+        .map(([k, r]) => `${t(SECTION_TR[k])}: ${r.error}`)
     : [];
   const blocking = !!v.yamlError || v.problems.length > 0 || serverErrors.length > 0;
 
@@ -197,7 +198,7 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
   }, [dirty]);
 
   function close() {
-    if (dirty && !window.confirm("Kaydedilmemiş değişiklikler var. Çıkılsın mı?")) return;
+    if (dirty && !window.confirm(t("Kaydedilmemiş değişiklikler var. Çıkılsın mı?"))) return;
     onClose();
   }
 
@@ -250,9 +251,9 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
     <div className="editor-page">
       <header className="editor-head">
         <button className="btn-small" onClick={close}>
-          ← Geri
+          ← {t("Geri")}
         </button>
-        <h2>{initial && !copy ? `Düzenle: ${initial.alias ?? ""}` : copy ? "Kopyadan yeni otomasyon" : "Yeni otomasyon"}</h2>
+        <h2>{initial && !copy ? t("Düzenle: {name}", { name: initial.alias ?? "" }) : copy ? t("Kopyadan yeni otomasyon") : t("Yeni otomasyon")}</h2>
         <span style={{ flex: 1 }} />
         {history.length > 0 && (
           <select
@@ -261,26 +262,26 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
             onChange={(e) => {
               const h = history[Number(e.target.value)];
               if (!h) return;
-              if (dirty && !window.confirm("Editördeki değişiklikler bu sürümle değiştirilecek. Devam?")) return;
+              if (dirty && !window.confirm(t("Editördeki değişiklikler bu sürümle değiştirilecek. Devam?"))) return;
               const { id: _omit, ...rest } = h.config; // eslint-disable-line @typescript-eslint/no-unused-vars
               setText(stringify(rest, { lineWidth: 0 }));
             }}
           >
-            <option value="">Önceki sürümler ({history.length})</option>
+            <option value="">{t("Önceki sürümler ({n})", { n: history.length })}</option>
             {history.map((h, i) => (
               <option key={h.savedAt} value={i}>
-                {new Date(h.savedAt).toLocaleString("tr-TR")}
+                {new Date(h.savedAt).toLocaleString(locale())}
               </option>
             ))}
           </select>
         )}
         {dirty && (
           <button className="btn-small" onClick={() => setText(startText)}>
-            Geri al
+            {t("Geri al")}
           </button>
         )}
         <button className="btn-primary" disabled={blocking || saving || (!dirty && !!configId)} onClick={save} title="Ctrl+S">
-          {saving ? "Kaydediliyor…" : "Kaydet"}
+          {saving ? t("Kaydediliyor…") : t("Kaydet")}
         </button>
       </header>
 
@@ -293,30 +294,30 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
           <section className={`check-box ${blocking ? "bad" : v.unknownEntities.length ? "warn" : "ok"}`}>
             {v.yamlError ? (
               <>
-                <b>YAML hatası{v.yamlLine ? ` (satır ${v.yamlLine})` : ""}</b>
+                <b>{t("YAML hatası")}{v.yamlLine ? ` (${t("satır {n}", { n: v.yamlLine })})` : ""}</b>
                 <span>{v.yamlError}</span>
               </>
             ) : v.problems.length || serverErrors.length ? (
               <>
-                <b>Düzeltilmesi gerekenler</b>
+                <b>{t("Düzeltilmesi gerekenler")}</b>
                 {[...v.problems, ...serverErrors].map((p) => (
                   <span key={p}>• {p}</span>
                 ))}
               </>
             ) : (
-              <b>✓ Geçerli{server ? " (HA doğruladı)" : ""}</b>
+              <b>✓ {t("Geçerli")}{server ? t(" (HA doğruladı)") : ""}</b>
             )}
             {v.unknownEntities.length > 0 && (
-              <span className="warn-text">Bilinmeyen varlık: {v.unknownEntities.join(", ")}</span>
+              <span className="warn-text">{t("Bilinmeyen varlık: {x}", { x: v.unknownEntities.join(", ") })}</span>
             )}
             {saveError && <span className="error-text">Kaydedilemedi: {saveError}</span>}
           </section>
 
           <section>
-            <h4>Varlık ekle</h4>
+            <h4>{t("Varlık ekle")}</h4>
             <input
               className="side-search"
-              placeholder="Cihaz ara, tıkla → imlece yazılır"
+              placeholder={t("Cihaz ara, tıkla → imlece yazılır")}
               value={entityQuery}
               onChange={(e) => setEntityQuery(e.target.value)}
             />
@@ -332,18 +333,18 @@ export default function AutomationEditor({ conn, entities, baseUrl, token, initi
 
           {(["triggers", "conditions", "actions"] as Section[]).map((sec) => (
             <section key={sec}>
-              <h4>{SECTION_TR[sec]} ekle</h4>
+              <h4>{t("{x} ekle", { x: t(SECTION_TR[sec]) })}</h4>
               <div className="snippet-grid">
                 {SNIPPETS.filter((s) => s.section === sec).map((s) => (
                   <button key={s.label} onClick={() => addSnippet(sec, s.item)}>
-                    + {s.label}
+                    + {t(s.label)}
                   </button>
                 ))}
               </div>
             </section>
           ))}
           <p className="muted small">
-            Parçalar ilgili bölümün sonuna eklenir; boş <code>entity_id</code> alanlarını yukarıdaki aramayla doldur.
+            {t("Parçalar ilgili bölümün sonuna eklenir; boş entity_id alanlarını yukarıdaki aramayla doldur.")}
           </p>
         </aside>
       </div>

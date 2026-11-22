@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { HaSettings } from "../ha/settings";
+import { t } from "../i18n";
 
 interface Props {
   initial: HaSettings | null;
@@ -24,37 +25,34 @@ export default function Login({ initial, hasSavedToken, error, busy, onSubmit }:
         }}
       >
         <h1>Ev Kontrol</h1>
-        <p className="muted">Home Assistant'a bağlan</p>
+        <p className="muted">{t("Home Assistant'a bağlan")}</p>
 
         <label>
-          Adres
+          {t("Adres")}
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://homeassistant.local:8123" />
         </label>
 
         <label>
-          Long-Lived Access Token
+          {t("Uzun ömürlü erişim jetonu")}
           <input
             type="password"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder={hasSavedToken ? "Kayıtlı token kullanılacak" : "eyJhbGciOi..."}
+            placeholder={hasSavedToken ? t("Kayıtlı token kullanılacak") : "eyJhbGciOi..."}
           />
         </label>
         <p className="hint">
           {hasSavedToken ? (
-            <>Token bu bilgisayarda kayıtlı; değiştirmek istemiyorsan boş bırak.</>
+            <>{t("Token bu bilgisayarda kayıtlı; değiştirmek istemiyorsan boş bırak.")}</>
           ) : (
-            <>
-              HA → Profil → Güvenlik → <b>Uzun ömürlü erişim jetonları</b> → Jeton oluştur. Bir kez girmen yeter; Windows'ta
-              güvenle saklanır.
-            </>
+            <>{t("HA → Profil → Güvenlik → Uzun ömürlü erişim jetonları → Jeton oluştur. Bir kez girmen yeter; Windows'ta güvenle saklanır.")}</>
           )}
         </p>
 
         {error && <div className="error">{error}</div>}
 
         <button type="submit" disabled={busy || !url || (!token && !hasSavedToken)}>
-          {busy ? "Bağlanıyor…" : "Bağlan"}
+          {busy ? t("Bağlanıyor…") : t("Bağlan")}
         </button>
       </form>
     </div>

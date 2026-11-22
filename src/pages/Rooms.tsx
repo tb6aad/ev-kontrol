@@ -5,6 +5,7 @@ import { deviceIsOn } from "../ha/devices";
 import { fmtWatts } from "../ha/energy";
 import DeviceCard, { EmptyState } from "../ui/DeviceCard";
 import Icon from "../ui/Icon";
+import { t } from "../i18n";
 
 export default function Rooms({ onOpen }: { onOpen: (key: string) => void }) {
   const { devices } = useHa();
@@ -16,7 +17,7 @@ export default function Rooms({ onOpen }: { onOpen: (key: string) => void }) {
       <div className="toolbar2">
         <label className="search-box">
           <Icon name="search" size={16} />
-          <input placeholder="Oda ya da cihaz ara…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input placeholder={t("Oda ya da cihaz ara…")} value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
         <div className="room-jump">
           {rooms.map(([area]) => (
@@ -27,7 +28,7 @@ export default function Rooms({ onOpen }: { onOpen: (key: string) => void }) {
         </div>
       </div>
 
-      {rooms.length === 0 && <EmptyState title="Eşleşen cihaz yok" text="Arama ifadesini değiştirmeyi dene." />}
+      {rooms.length === 0 && <EmptyState title={t("Eşleşen cihaz yok")} text={t("Arama ifadesini değiştirmeyi dene.")} />}
 
       {rooms.map(([area, list]) => {
         const on = list.filter(deviceIsOn).length;
@@ -38,7 +39,7 @@ export default function Rooms({ onOpen }: { onOpen: (key: string) => void }) {
             <div className="section-head">
               <h2>{area}</h2>
               <span className="section-meta">
-                {list.length} cihaz · {on} açık{hasPower ? ` · ${fmtWatts(watts)}` : ""}
+                {t("{n} cihaz · {on} açık", { n: list.length, on })}{hasPower ? ` · ${fmtWatts(watts)}` : ""}
               </span>
             </div>
             <div className="grid-wrap">

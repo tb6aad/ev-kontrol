@@ -8,6 +8,7 @@ import {
   ERR_INVALID_AUTH,
   ERR_CANNOT_CONNECT,
 } from "home-assistant-js-websocket";
+import { t } from "../i18n";
 
 export interface AreaEntry {
   area_id: string;
@@ -42,9 +43,13 @@ export async function connect(url: string, token: string): Promise<Connection> {
   try {
     return await createConnection({ auth });
   } catch (err) {
-    if (err === ERR_INVALID_AUTH) throw new Error("Token geçersiz.");
-    if (err === ERR_CANNOT_CONNECT) throw new Error("Home Assistant'a ulaşılamadı. Adresi kontrol et.");
-    throw new Error(`Bağlantı hatası (${String(err)})`);
+    if (err === ERR_INVALID_AUTH) {
+      const e = new Error(t("Token geçersiz."));
+      e.name = "AuthError";
+      throw e;
+    }
+    if (err === ERR_CANNOT_CONNECT) throw new Error(t("Home Assistant'a ulaşılamadı. Adresi kontrol et."));
+    throw new Error(t("Bağlantı hatası ({e})", { e: String(err) }));
   }
 }
 

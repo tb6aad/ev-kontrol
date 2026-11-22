@@ -1,5 +1,6 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import type { Registries } from "./client";
+import { locale, t, tk } from "../i18n";
 
 /** Panelde hiç gösterilmeyecek domainler (sistem kalabalığı). */
 const HIDDEN_DOMAINS = new Set([
@@ -91,7 +92,7 @@ export function buildDevices(entities: HassEntities, reg: Registries): DeviceIte
     out.push({
       key,
       name: g.name,
-      area: (g.areaId && areaName.get(g.areaId)) || "Odasız",
+      area: (g.areaId && areaName.get(g.areaId)) || t("Odasız"),
       entities: sorted,
       primary: sorted[0],
       power: power !== sorted[0] ? power : undefined,
@@ -101,34 +102,34 @@ export function buildDevices(entities: HassEntities, reg: Registries): DeviceIte
 }
 
 const STATE_TR: Record<string, string> = {
-  on: "Açık", off: "Kapalı", locked: "Kilitli", unlocked: "Kilit açık", open: "Açık", closed: "Kapalı",
-  opening: "Açılıyor", closing: "Kapanıyor", unavailable: "Erişilemiyor", unknown: "Bilinmiyor",
-  playing: "Çalıyor", paused: "Duraklatıldı", idle: "Boşta", standby: "Beklemede", home: "Evde",
-  not_home: "Dışarıda", heat: "Isıtma", cool: "Soğutma", auto: "Otomatik", dry: "Nem alma",
-  fan_only: "Fan", heat_cool: "Isıt/Soğut", cleaning: "Temizliyor", docked: "İstasyonda", returning: "Dönüyor",
+  on: tk("Açık"), off: tk("Kapalı"), locked: tk("Kilitli"), unlocked: tk("Kilit açık"), open: tk("Açık"), closed: tk("Kapalı"),
+  opening: tk("Açılıyor"), closing: tk("Kapanıyor"), unavailable: tk("Erişilemiyor"), unknown: tk("Bilinmiyor"),
+  playing: tk("Çalıyor"), paused: tk("Duraklatıldı"), idle: tk("Boşta"), standby: tk("Beklemede"), home: tk("Evde"),
+  not_home: tk("Dışarıda"), heat: tk("Isıtma"), cool: tk("Soğutma"), auto: tk("Otomatik"), dry: tk("Nem alma"),
+  fan_only: tk("Fan"), heat_cool: tk("Isıt/Soğut"), cleaning: tk("Temizliyor"), docked: tk("İstasyonda"), returning: tk("Dönüyor"),
 };
 
 export function formatState(e: HassEntity) {
-  if (STATE_TR[e.state]) return STATE_TR[e.state];
+  if (STATE_TR[e.state]) return t(STATE_TR[e.state]);
   const unit = e.attributes.unit_of_measurement as string | undefined;
   const n = Number(e.state);
   if (e.state !== "" && !Number.isNaN(n)) {
-    const s = n.toLocaleString("tr-TR", { maximumFractionDigits: Math.abs(n) < 10 ? 2 : 1 });
+    const s = n.toLocaleString(locale(), { maximumFractionDigits: Math.abs(n) < 10 ? 2 : 1 });
     return unit ? `${s} ${unit}` : s;
   }
   // Zaman damgaları
   if (e.attributes.device_class === "timestamp") {
     const d = new Date(e.state);
-    if (!Number.isNaN(d.getTime())) return d.toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
+    if (!Number.isNaN(d.getTime())) return d.toLocaleString(locale(), { dateStyle: "short", timeStyle: "short" });
   }
   return unit ? `${e.state} ${unit}` : e.state;
 }
 
 export const DOMAIN_LABELS: Record<string, string> = {
-  light: "Işık", switch: "Anahtar", sensor: "Sensör", binary_sensor: "Sensör", lock: "Kilit",
-  cover: "Perde/Kapı", fan: "Fan", climate: "Klima", media_player: "Medya", automation: "Otomasyon",
-  script: "Script", scene: "Sahne", button: "Buton", input_boolean: "Yardımcı", camera: "Kamera",
-  vacuum: "Süpürge", siren: "Siren", remote: "Kumanda", number: "Ayar", select: "Seçim",
+  light: tk("Işık"), switch: tk("Anahtar"), sensor: tk("Sensör"), binary_sensor: tk("Sensör"), lock: tk("Kilit"),
+  cover: tk("Perde/Kapı"), fan: tk("Fan"), climate: tk("Klima"), media_player: tk("Medya"), automation: tk("Otomasyon"),
+  script: tk("Script"), scene: tk("Sahne"), button: tk("Buton"), input_boolean: tk("Yardımcı"), camera: tk("Kamera"),
+  vacuum: tk("Süpürge"), siren: tk("Siren"), remote: tk("Kumanda"), number: tk("Ayar"), select: tk("Seçim"),
 };
 
 /** Ui/Icon setindeki ikon adı. */
@@ -161,7 +162,7 @@ export function extraInfo(d: DeviceItem): string[] {
   const p = d.primary;
   if (isUnavailable(p)) return out;
   if (domainOf(p.entity_id) === "light" && p.state === "on" && typeof p.attributes.brightness === "number") {
-    out.push(`%${Math.round(((p.attributes.brightness as number) / 255) * 100)} parlaklık`);
+    out.push(t("%{n} parlaklık", { n: Math.round(((p.attributes.brightness as number) / 255) * 100) }));
   }
   if (d.power && !isUnavailable(d.power)) out.push(formatState(d.power));
   const byClass = (dc: string) =>
@@ -171,7 +172,7 @@ export function extraInfo(d: DeviceItem): string[] {
     if (s) out.push(formatState(s));
   }
   const batt = byClass("battery");
-  if (batt) out.push(`Pil ${formatState(batt)}`);
+  if (batt) out.push(t("Pil {v}", { v: formatState(batt) }));
   return out.slice(0, 2);
 }
 
