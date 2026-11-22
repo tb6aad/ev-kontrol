@@ -51,3 +51,7 @@ Siri için Home Assistant'ta iki şablon yardımcısı oluşturup HomeKit Bridge
 
 - **Anahtar "Bilgisayar":** kapatınca `shutdown`, açınca `shutdown_cancel` → "Hey Siri, bilgisayarı kapat"
 - **Kilit "Bilgisayar ekranı":** kilitleyince `lock` → "Hey Siri, bilgisayar ekranını kilitle"
+
+## Lisans
+
+[MIT](LICENSE)
