@@ -23,6 +23,10 @@ export interface DeviceItem {
   key: string;
   name: string;
   area: string;
+  /** HA alan kimliği (odasızsa null) */
+  areaId: string | null;
+  /** Kart bir HA cihazıysa onun kimliği; tek varlıksa yok */
+  deviceId?: string;
   entities: HassEntity[];
   primary: HassEntity;
   power?: HassEntity;
@@ -93,6 +97,8 @@ export function buildDevices(entities: HassEntities, reg: Registries): DeviceIte
       key,
       name: g.name,
       area: (g.areaId && areaName.get(g.areaId)) || t("Odasız"),
+      areaId: g.areaId && areaName.has(g.areaId) ? g.areaId : null,
+      deviceId: devices.has(key) ? key : undefined,
       entities: sorted,
       primary: sorted[0],
       power: power !== sorted[0] ? power : undefined,

@@ -83,3 +83,22 @@ export function pressButton(conn: Connection, entityId: string) {
   const service = domain === "script" || domain === "scene" ? "turn_on" : "press";
   return callService(conn, domain, service, { entity_id: entityId });
 }
+
+/**
+ * Oda, cihaz ya da varlık kaydı değişince (uygulamadan ya da HA arayüzünden) kayıtları yeniden çek.
+ * Art arda gelen olaylar tek sorguda birleştirilir. Dönen fonksiyon dinlemeyi bırakır.
+ */
+export function watchRegistries(conn: Connection, cb: (r: Registries) => void): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const refresh = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fetchRegistries(conn).then(cb).catch(() => {}), 400);
+  };
+  const subs = ["area_registry_updated", "device_registry_updated", "entity_registry_updated"].map((ev) =>
+    conn.subscribeEvents(refresh, ev),
+  );
+  return () => {
+    clearTimeout(timer);
+    subs.forEach((p) => p.then((u) => u()).catch(() => {}));
+  };
+}

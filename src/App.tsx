@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Connection, HassEntities } from "home-assistant-js-websocket";
 import { ERR_INVALID_AUTH } from "home-assistant-js-websocket";
-import { connect, fetchRegistries, watchEntities, Registries } from "./ha/client";
+import { connect, fetchRegistries, watchEntities, watchRegistries, Registries } from "./ha/client";
 import { HaSettings, loadSettings, saveSettings, clearSettings, lastUrl } from "./ha/settings";
 import { activeStats, buildDevices } from "./ha/devices";
 import { fmtWatts, livePower } from "./ha/energy";
@@ -106,10 +106,12 @@ function AppInner() {
           setSettings(s);
           setRegistries(await fetchRegistries(c));
           const unsubEntities = watchEntities(c, onEntities);
+          const unsubRegistry = watchRegistries(c, setRegistries);
           const unsubPc = watchPcCommands(c, () => pcControlRef.current, (kind, text) => notify(kind, text, { key: `pc:${text}`, cooldownMs: 1500 }));
           unsubRef.current = () => {
             unsubEntities();
             unsubPc();
+            unsubRegistry();
           };
 
           // Bağlantı yaşam döngüsü: kütüphane kopunca kendisi yeniden bağlanır

@@ -434,3 +434,13 @@ button.widget { color: inherit; transition: border-color var(--t-fast); }
 .pc-cmds li { display: flex; justify-content: space-between; gap: var(--s3); padding: 6px 10px; border-radius: 6px; background: var(--tile); font-size: 13px; }
 .pc-cmds li.missing { opacity: .55; }
 .pc-cmds code { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Oda yönetimi */
+.room-form { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.room-form input { min-width: 200px; padding: 6px 10px; }
+.room-form .btn-primary { padding: 6px 14px; }
+.room-tools { margin-left: auto; display: inline-flex; gap: 14px; }
+.section-head .room-tools .link { margin-left: 0; }
+.danger-link { color: var(--bad); }
+.room-confirm { margin: 6px 0 10px; }
+.room-select { min-width: 160px; padding: 4px 8px; }

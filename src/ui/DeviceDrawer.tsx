@@ -6,6 +6,8 @@ import {
   ACTION_DOMAINS, DOMAIN_LABELS, PRESS_DOMAINS, domainOf, formatState, iconName, isOn, isUnavailable, shortName,
 } from "../ha/devices";
 import { useHa } from "../state/ha";
+import { useToast } from "../state/toast";
+import { canMove, moveToArea } from "../ha/areas";
 import { usePrefs } from "../state/prefs";
 import Toggle from "../components/Toggle";
 import Icon from "./Icon";
@@ -341,6 +343,7 @@ export default function DeviceDrawer({ device: d, onClose }: Props) {
           <h4>{t("Teknik")}</h4>
           <dl>
             <dt>{t("Varlık")}</dt><dd><code>{p.entity_id}</code></dd>
+            <dt>{t("Oda")}</dt><dd><RoomPicker device={d} /></dd>
             <dt>{t("Bağlantı")}</dt><dd>{offline ? t("HA bağlantısı yok") : unavailable ? t("Erişilemiyor") : t("Çevrimiçi")}</dd>
             <dt>{t("Son değişim")}</dt><dd>{new Date(p.last_changed).toLocaleString(locale())}</dd>
             {capabilities.length > 0 && (<><dt>{t("Desteklenen")}</dt><dd>{capabilities.join(", ")}</dd></>)}
@@ -380,5 +383,42 @@ function EntityRow({ e, deviceName }: { e: HassEntity; deviceName: string }) {
         <span className="detail-state">{formatState(e)}</span>
       )}
     </div>
+  );
+}
+
+/** Cihazın odasını değiştir (HA alanı). Kayıt olayı gelince kart yeni odasına geçer. */
+function RoomPicker({ device }: { device: DeviceItem }) {
+  const { conn, registries, status } = useHa();
+  const { notify } = useToast();
+  const [busy, setBusy] = useState(false);
+  const movable = canMove(device, registries);
+  const areas = [...registries.areas].sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  const change = async (value: string) => {
+    const areaId = value || null;
+    if (areaId === device.areaId) return;
+    setBusy(true);
+    try {
+      await moveToArea(conn, registries, device, areaId);
+      const target = areas.find((a) => a.area_id === areaId)?.name ?? t("Odasız");
+      notify("success", t("{name} → {room} taşındı.", { name: device.name, room: target }));
+    } catch (e) {
+      notify("error", t("Oda değiştirilemedi: {e}", { e: (e as { message?: string })?.message ?? String(e) }));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <select
+      className="room-select"
+      value={device.areaId ?? ""}
+      disabled={!movable || busy || status !== "connected"}
+      title={movable ? t("Odayı değiştir") : t("Bu varlığın HA'da kimliği (unique_id) yok; odası buradan değiştirilemez.")}
+      onChange={(e) => change(e.target.value)}
+    >
+      <option value="">{t("Odasız")}</option>
+      {areas.map((a) => (
+        <option key={a.area_id} value={a.area_id}>{a.name}</option>
+      ))}
+    </select>
   );
 }

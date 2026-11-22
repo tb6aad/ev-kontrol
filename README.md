@@ -8,6 +8,7 @@ Home Assistant için Windows masaüstü kontrol paneli. Tauri 2, React ve TypeSc
 
 - **Pano:** favori cihazlar, oda özeti, anlık güç tüketimi, evde/dışarıda durumu (konum bilgisi eskiyse "Konum güncel değil" gösterir)
 - **Odalar ve tüm cihazlar:** arama, filtreleme, cihaz ayrıntı çekmecesi; komutların gerçekten uygulandığı doğrulanır
+- **Oda yönetimi:** oda ekleme, yeniden adlandırma, silme ve cihazı başka odaya taşıma (doğrudan Home Assistant alanlarına yazılır)
 - **Otomasyonlar:** listeleme, açma/kapama, tetikleme, silme ve YAML düzenleyici
 - **Akıllı düğmeler, hareket sensörleri, kameralar, robot süpürge ve enerji** sayfaları
 - **Tepsi:** kapatınca tepsiye gizlenir, `Ctrl+Alt+H` ile aç/gizle (değiştirilebilir), Windows açılışında başlatma
